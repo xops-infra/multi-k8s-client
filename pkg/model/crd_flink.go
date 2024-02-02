@@ -121,6 +121,12 @@ type Job struct {
 	UpgradeMode *string `json:"upgradeMode" binding:"required"` // stateless or stateful
 }
 
+type FlinkSessionJobRequest struct {
+	JobName     *string `json:"jobName" binding:"required"`
+	ClusterName *string `json:"clusterName" binding:"required"` // session集群名称
+	Job         *Job    `json:"job" binding:"required"`
+}
+
 /*
 apiVersion: flink.apache.org/v1beta1
 kind: FlinkSessionJob
@@ -136,12 +142,6 @@ spec:
 	  parallelism: 4
 	  upgradeMode: stateless
 */
-type FlinkSessionJobRequest struct {
-	JobName     *string `json:"jobName" binding:"required"`
-	ClusterName *string `json:"clusterName" binding:"required"` // session集群名称
-	Job         *Job    `json:"job" binding:"required"`
-}
-
 func (req *FlinkSessionJobRequest) ToYaml() map[string]any {
 	yaml := map[string]any{
 		"apiVersion": "flink.apache.org/v1beta1",

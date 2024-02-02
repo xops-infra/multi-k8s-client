@@ -125,7 +125,7 @@ func TestCrdSubmitFlinkSessionJob(t *testing.T) {
 	req := model.FlinkSessionJobRequest{
 		ClusterName: tea.String("application-session-1"),
 		Job: &model.Job{
-			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
+			JarURI:      tea.String("https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.16.1/flink-examples-streaming_2.12-1.16.1-TopSpeedWindowing.jar"),
 			Parallelism: tea.Int32(2),
 			UpgradeMode: tea.String("stateless"),
 		},
@@ -135,6 +135,7 @@ func TestCrdSubmitFlinkSessionJob(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("CrdSubmitFlinkSessionJob success", resp)
+	// kubectl port-forward svc/application-session-1-rest 8081
 }
 
 func TestCrdDeleteFlinkDeployment(t *testing.T) {
