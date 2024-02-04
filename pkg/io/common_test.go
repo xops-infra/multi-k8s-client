@@ -101,7 +101,7 @@ func TestCrdApplyFlinkDeployment(t *testing.T) {
 		},
 	}
 
-	resp, err := client.CrdApplyFlinkDeployment("", req.ToYaml())
+	resp, err := client.CrdFlinkDeploymentApply("", req.ToYaml())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +113,7 @@ func TestApplyFlinkDeploymentSession(t *testing.T) {
 		ClusterName: tea.String("session-cluster"),
 	}
 
-	resp, err := client.CrdApplyFlinkDeployment("", req.ToYaml())
+	resp, err := client.CrdFlinkDeploymentApply("", req.ToYaml())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,6 +121,7 @@ func TestApplyFlinkDeploymentSession(t *testing.T) {
 	// kubectl port-forward svc/session-cluster-rest 8081
 }
 
+// FlinkSessionJob
 func TestCrdSubmitFlinkSessionJob(t *testing.T) {
 	req := model.FlinkSessionJobRequest{
 		JobName:     tea.String("test-job"),
@@ -131,7 +132,7 @@ func TestCrdSubmitFlinkSessionJob(t *testing.T) {
 			UpgradeMode: tea.String("stateless"),
 		},
 	}
-	resp, err := client.CrdSubmitFlinkSessionJob("", req.ToYaml())
+	resp, err := client.CrdFlinkSessionJobSubmit("", req.ToYaml())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,9 +141,9 @@ func TestCrdSubmitFlinkSessionJob(t *testing.T) {
 
 // FlinkDeployment
 func TestCrdDeleteFlinkDeployment(t *testing.T) {
-	cluster := []string{"application-1", "application-session-1"}
+	cluster := []string{"session-cluster"}
 	for _, i := range cluster {
-		err := client.CrdDeleteFlinkDeployment("", i)
+		err := client.CrdFlinkDeploymentDelete("", i)
 		if err != nil {
 			t.Fatal(err)
 		}

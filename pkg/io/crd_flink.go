@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func (c *k8sClient) CrdApplyFlinkDeployment(namespace string, yaml map[string]any) (any, error) {
+func (c *k8sClient) CrdFlinkDeploymentApply(namespace string, yaml map[string]any) (any, error) {
 	flinkDeploymentRes := GetGVR("flink.apache.org", "v1beta1", "flinkdeployments")
 
 	flinkDeployment := &unstructured.Unstructured{
@@ -25,7 +25,7 @@ func (c *k8sClient) CrdApplyFlinkDeployment(namespace string, yaml map[string]an
 	return result, nil
 }
 
-func (c *k8sClient) CrdDeleteFlinkDeployment(namespace, name string) error {
+func (c *k8sClient) CrdFlinkDeploymentDelete(namespace, name string) error {
 	flinkDeploymentRes := GetGVR("flink.apache.org", "v1beta1", "flinkdeployments")
 	if namespace == "" {
 		namespace = apiv1.NamespaceDefault
@@ -37,7 +37,7 @@ func (c *k8sClient) CrdDeleteFlinkDeployment(namespace, name string) error {
 	return nil
 }
 
-func (c *k8sClient) CrdSubmitFlinkSessionJob(namespace string, yaml map[string]any) (any, error) {
+func (c *k8sClient) CrdFlinkSessionJobSubmit(namespace string, yaml map[string]any) (any, error) {
 	flinkJobRes := GetGVR("flink.apache.org", "v1beta1", "flinksessionjobs")
 	flinkJob := &unstructured.Unstructured{
 		Object: yaml,
@@ -51,4 +51,16 @@ func (c *k8sClient) CrdSubmitFlinkSessionJob(namespace string, yaml map[string]a
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *k8sClient) CrdFlinkSessionJobDelete(namespace, name string) error {
+	flinkJobRes := GetGVR("flink.apache.org", "v1beta1", "flinksessionjobs")
+	if namespace == "" {
+		namespace = apiv1.NamespaceDefault
+	}
+	err := c.dynamic.Resource(flinkJobRes).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
 }
