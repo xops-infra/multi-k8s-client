@@ -92,56 +92,61 @@ func TestK8SRbac(t *testing.T) {
 }
 
 func TestCrdApplyFlinkDeployment(t *testing.T) {
-	{
-		req := model.CreateFlinkRequest{
-			ClusterName: tea.String("application-1"),
-			Job: &model.Job{
-				JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
-				Parallelism: tea.Int32(2),
-				UpgradeMode: tea.String("stateless"),
-			},
-		}
-
-		resp, err := client.CrdApplyFlinkDeployment("", req.ToYaml())
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log("FlinkApplication success", resp)
+	req := model.CreateFlinkRequest{
+		ClusterName: tea.String("application-cluster"),
+		Job: &model.Job{
+			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
+			Parallelism: tea.Int32(2),
+			UpgradeMode: tea.String("stateless"),
+		},
 	}
-	{
-		req := model.CreateFlinkRequest{
-			ClusterName: tea.String("application-session-1"),
-		}
 
-		resp, err := client.CrdApplyFlinkDeployment("", req.ToYaml())
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log("FlinkSession success", resp)
+	resp, err := client.CrdFlinkDeploymentApply("", req.ToYaml())
+	if err != nil {
+		t.Fatal(err)
 	}
+	t.Log("Start FlinkApplication success", resp)
 }
 
+func TestApplyFlinkDeploymentSession(t *testing.T) {
+	req := model.CreateFlinkRequest{
+		ClusterName: tea.String("session-cluster"),
+	}
+
+	resp, err := client.CrdFlinkDeploymentApply("", req.ToYaml())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Start FlinkSession success", resp)
+	// kubectl port-forward svc/session-cluster-rest 8081
+}
+
+// FlinkSessionJob
 func TestCrdSubmitFlinkSessionJob(t *testing.T) {
 	req := model.FlinkSessionJobRequest{
-		ClusterName: tea.String("application-session-1"),
+		JobName:     tea.String("test-job"),
+		ClusterName: tea.String("session-cluster"),
 		Job: &model.Job{
 			JarURI:      tea.String("https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.16.1/flink-examples-streaming_2.12-1.16.1-TopSpeedWindowing.jar"),
 			Parallelism: tea.Int32(2),
 			UpgradeMode: tea.String("stateless"),
 		},
 	}
-	resp, err := client.CrdSubmitFlinkSessionJob("", req.ToYaml())
+	resp, err := client.CrdFlinkSessionJobSubmit("", req.ToYaml())
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("CrdSubmitFlinkSessionJob success", resp)
-	// kubectl port-forward svc/application-session-1-rest 8081
 }
 
+// FlinkDeployment
 func TestCrdDeleteFlinkDeployment(t *testing.T) {
-	err := client.CrdDeleteFlinkDeployment("", "application-1")
-	if err != nil {
-		t.Fatal(err)
+	cluster := []string{"session-cluster"}
+	for _, i := range cluster {
+		err := client.CrdFlinkDeploymentDelete("", i)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("CrdDeleteFlinkDeployment %s success", i)
 	}
-	t.Log("CrdDeleteFlinkDeployment success")
 }

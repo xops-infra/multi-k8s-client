@@ -13,8 +13,9 @@ type K8SIO interface {
 	// RBAC
 	RbacList(namespace string) (*rbacV1.RoleList, error)
 
-	// CRD
-	CrdApplyFlinkDeployment(namespace string, yaml map[string]any) (any, error)
-	CrdSubmitFlinkSessionJob(namespace string, yaml map[string]any) (any, error) // for flink session cluster, can't be used for application cluster
-	CrdDeleteFlinkDeployment(namespace, name string) error
+	// CRD Flink
+	CrdFlinkDeploymentApply(namespace string, yaml map[string]any) (any, error)
+	CrdFlinkDeploymentDelete(namespace, name string) error
+	CrdFlinkSessionJobSubmit(namespace string, yaml map[string]any) (any, error) // for flink session cluster, can't be used for application cluster
+	CrdFlinkSessionJobDelete(namespace, name string) error
 }
