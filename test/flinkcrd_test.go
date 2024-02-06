@@ -7,6 +7,7 @@ import (
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
 )
 
+// FlinkApplication Create
 func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 	req := model.CreateFlinkRequest{
 		ClusterName: tea.String("application-cluster"),
@@ -24,6 +25,7 @@ func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 	t.Log("Start FlinkApplication success", resp)
 }
 
+// FlinkSession Create
 func TestCrdFlinkDeploymentApplySession(t *testing.T) {
 	req := model.CreateFlinkRequest{
 		ClusterName: tea.String("session-cluster"),
@@ -53,6 +55,18 @@ func TestCrdFlinkSessionJobSubmit(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("CrdFlinkSessionJobSubmit success", resp)
+}
+
+// CrdFlinkSessionJobDelete
+func TestCrdFlinkSessionJobDelete(t *testing.T) {
+	cluster := []string{"test-job"}
+	for _, i := range cluster {
+		err := client.CrdFlinkSessionJobDelete("", i)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("CrdFlinkSessionJobDelete %s success", i)
+	}
 }
 
 // FlinkDeployment

@@ -19,3 +19,10 @@ type K8SIO interface {
 	CrdFlinkSessionJobSubmit(namespace string, yaml map[string]any) (any, error) // for flink session cluster, can't be used for application cluster
 	CrdFlinkSessionJobDelete(namespace, name string) error
 }
+
+type K8SContract interface {
+	CrdFlinkDeploymentApply(cluster, namespace string, yaml map[string]any) (any, error)
+	CrdFlinkDeploymentDelete(cluster, namespace, name string) error
+	CrdFlinkSessionJobSubmit(cluster, namespace string, yaml map[string]any) (any, error)
+	CrdFlinkSessionJobDelete(cluster, namespace, name string) error
+}
