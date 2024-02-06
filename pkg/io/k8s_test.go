@@ -28,10 +28,6 @@ func init() {
 		panic(err)
 	}
 	kubeConfig := "~/.kube/config"
-	client, err = io.NewK8SClient(kubeConfig)
-	if err != nil {
-		panic(err)
-	}
 
 	if strings.HasPrefix(kubeConfig, "~/") {
 		kubeConfig = strings.Replace(kubeConfig, "~/", homedir.HomeDir()+"/", 1)
