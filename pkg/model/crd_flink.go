@@ -2,7 +2,7 @@ package model
 
 type CreateFlinkRequest struct {
 	NameSpace      *string      `json:"nameSpace" default:"default"`
-	ClusterName    *string      `json:"clusterName"`
+	ClusterName    *string      `json:"clusterName" binding:"required"`
 	Image          *string      `json:"image" default:"flink:1.17"`
 	Version        *string      `json:"version" default:"v1_17"`
 	ServiceAccount *string      `json:"serviceAccount" default:"flink"`
@@ -169,4 +169,16 @@ func (req *FlinkSessionJobRequest) ToYaml() map[string]any {
 	}
 	// fmt.Println(tea.Prettify(yaml))
 	return yaml
+}
+
+type DeleteFlinkClusterRequest struct {
+	ClusterName *string `json:"clusterName" binding:"required"`
+	NameSpace   *string `json:"nameSpace" default:"default"`
+	Name        *string `json:"name" binding:"required"`
+}
+
+type DeleteFlinkJobRequest struct {
+	ClusterName *string `json:"clusterName" binding:"required"`
+	NameSpace   *string `json:"nameSpace" default:"default"`
+	Name        *string `json:"name" binding:"required"`
 }
