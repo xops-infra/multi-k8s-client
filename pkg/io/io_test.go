@@ -1,16 +1,76 @@
-package test
+package io_test
 
 import (
 	"testing"
 
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/joho/godotenv"
+	"github.com/xops-infra/multi-k8s-client/pkg/io"
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
 )
 
+var client model.K8SIO
+
+func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic(err)
+	}
+	client, err = io.NewK8SClient(model.Cluster{
+		KubePath: tea.String("~/.kube/config"),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+func TestK8SPod(t *testing.T) {
+
+	var podName string
+	{
+		// List
+		pods, err := client.PodList("default")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("List Pod success", len(pods.Items))
+		if len(pods.Items) == 0 {
+			t.Fatal("Pod not found")
+			return
+		}
+		podName = pods.Items[0].Name
+	}
+	{
+		// Get
+		pod, err := client.PodGet("default", podName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// fmt.Println(tea.Prettify(pod))
+		t.Log("Get Pod success", pod.Name)
+	}
+}
+
+// TestK8SRbac
+func TestK8SRbac(t *testing.T) {
+	{
+		// Rbac
+		roles, err := client.RbacList("default")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("List Rbac success", len(roles.Items))
+		for i := range roles.Items {
+			t.Log(roles.Items[i].Name)
+		}
+	}
+}
+
 // FlinkApplication Create
 func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
-	req := model.CreateFlinkRequest{
-		ClusterName: tea.String("application-cluster"),
+	req := model.CreateFlinkClusterRequest{
+		MetaDataName: tea.String("application-cluster"),
 		Job: &model.Job{
 			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
 			Parallelism: tea.Int32(2),
@@ -27,8 +87,8 @@ func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 
 // FlinkSession Create
 func TestCrdFlinkDeploymentApplySession(t *testing.T) {
-	req := model.CreateFlinkRequest{
-		ClusterName: tea.String("session-cluster"),
+	req := model.CreateFlinkClusterRequest{
+		MetaDataName: tea.String("session-cluster"),
 	}
 
 	resp, err := client.CrdFlinkDeploymentApply("", req.ToYaml())
@@ -41,7 +101,7 @@ func TestCrdFlinkDeploymentApplySession(t *testing.T) {
 
 // FlinkSessionJob
 func TestCrdFlinkSessionJobSubmit(t *testing.T) {
-	req := model.FlinkSessionJobRequest{
+	req := model.CreateFlinkSessionJobRequest{
 		JobName:     tea.String("test-job"),
 		ClusterName: tea.String("session-cluster"),
 		Job: &model.Job{
