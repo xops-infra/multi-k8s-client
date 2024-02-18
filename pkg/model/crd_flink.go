@@ -1,13 +1,16 @@
 package model
 
-type CreateFlinkRequest struct {
-	NameSpace      *string      `json:"nameSpace" default:"default"`
-	ClusterName    *string      `json:"clusterName"`
+import "github.com/alibabacloud-go/tea/tea"
+
+type CreateFlinkClusterRequest struct {
+	K8SClusterName *string      `json:"k8s_cluster_name" binding:"required"`
+	NameSpace      *string      `json:"namespace" default:"default"`
+	MetaDataName   *string      `json:"metadata_name" binding:"required"` // metadata.name
 	Image          *string      `json:"image" default:"flink:1.17"`
 	Version        *string      `json:"version" default:"v1_17"`
-	ServiceAccount *string      `json:"serviceAccount" default:"flink"`
-	TaskManager    *TaskManager `json:"taskManager"`
-	JobManager     *JobManager  `json:"jobManager"`
+	ServiceAccount *string      `json:"service_account" default:"flink"`
+	TaskManager    *TaskManager `json:"task_manager"`
+	JobManager     *JobManager  `json:"job_manager"`
 	Job            *Job         `json:"job"` // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
 }
 
@@ -38,7 +41,7 @@ spec:
 	  parallelism: 2  # 2 task managers
 	  upgradeMode: stateless
 */
-func (req *CreateFlinkRequest) ToYaml() map[string]any {
+func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	yaml := map[string]interface{}{
 		"apiVersion": "flink.apache.org/v1beta1",
 		"kind":       "FlinkDeployment",
@@ -64,15 +67,10 @@ func (req *CreateFlinkRequest) ToYaml() map[string]any {
 					"cpu":    1,
 				},
 			},
-			// "job": map[string]interface{}{
-			// 	"jarURI":      "local:///opt/flink/examples/streaming/StateMachineExample.jar",
-			// 	"parallelism": 2,
-			// 	"upgradeMode": "stateless",
-			// },
 		},
 	}
-	if req.ClusterName != nil {
-		yaml["metadata"].(map[string]interface{})["name"] = *req.ClusterName
+	if req.MetaDataName != nil {
+		yaml["metadata"].(map[string]interface{})["name"] = *req.MetaDataName
 	}
 	if req.NameSpace != nil {
 		yaml["metadata"].(map[string]interface{})["namespace"] = *req.NameSpace
@@ -93,7 +91,21 @@ func (req *CreateFlinkRequest) ToYaml() map[string]any {
 		yaml["spec"].(map[string]interface{})["jobManager"].(map[string]interface{})["resource"] = req.JobManager.Resource
 	}
 	if req.Job != nil {
-		yaml["spec"].(map[string]interface{})["job"] = req.Job
+		yaml["spec"].(map[string]interface{})["job"] = map[string]interface{}{
+			"jarURI":      "local:///opt/flink/examples/streaming/StateMachineExample.jar",
+			"parallelism": 2,
+			"upgradeMode": "stateless",
+		}
+		if req.Job.UpgradeMode == nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["upgradeMode"] = "stateless"
+		}
+		if req.Job.JarURI != nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["jarURI"] = *req.Job.JarURI
+		}
+		if req.Job.Parallelism != nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["parallelism"] = *req.Job.Parallelism
+		}
+
 	}
 	if req.ServiceAccount != nil {
 		yaml["spec"].(map[string]interface{})["serviceAccount"] = *req.ServiceAccount
@@ -116,15 +128,22 @@ type Resource struct {
 }
 
 type Job struct {
-	JarURI      *string `json:"jarURI" binding:"required"`
+	JarURI      *string `json:"jar_url" binding:"required"` // jar包路径，application模式必须是local方式将包打包到镜像配合image去做;session模式必须是http方式
 	Parallelism *int32  `json:"parallelism" binding:"required"`
-	UpgradeMode *string `json:"upgradeMode" binding:"required"` // stateless or stateful
+	UpgradeMode *string `json:"upgrade_mode" binding:"required"` // stateless or stateful
 }
 
-type FlinkSessionJobRequest struct {
-	JobName     *string `json:"jobName" binding:"required"`
-	ClusterName *string `json:"clusterName" binding:"required"` // session集群名称
-	Job         *Job    `json:"job" binding:"required"`
+type CreateFlinkClusterResponse struct {
+	Result any    `json:"result"`
+	Info   string `json:"info"`
+}
+
+type CreateFlinkSessionJobRequest struct {
+	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"`
+	NameSpace      *string `json:"namespace"` // 默认是default
+	JobName        *string `json:"job_name" binding:"required"`
+	ClusterName    *string `json:"cluster_name" binding:"required"` // session集群名称 spec.deploymentName
+	Job            *Job    `json:"job" binding:"required"`
 }
 
 /*
@@ -142,7 +161,7 @@ spec:
 	  parallelism: 4
 	  upgradeMode: stateless
 */
-func (req *FlinkSessionJobRequest) ToYaml() map[string]any {
+func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 	yaml := map[string]any{
 		"apiVersion": "flink.apache.org/v1beta1",
 		"kind":       "FlinkSessionJob",
@@ -159,14 +178,35 @@ func (req *FlinkSessionJobRequest) ToYaml() map[string]any {
 		},
 	}
 	if req.JobName != nil {
-		yaml["metadata"].(map[string]interface{})["name"] = *req.JobName
+		yaml["metadata"].(map[string]interface{})["name"] = tea.StringValue(req.JobName)
 	}
 	if req.ClusterName != nil {
-		yaml["spec"].(map[string]interface{})["deploymentName"] = *req.ClusterName
+		yaml["spec"].(map[string]interface{})["deploymentName"] = tea.StringValue(req.ClusterName)
 	}
 	if req.Job != nil {
-		yaml["spec"].(map[string]interface{})["job"] = req.Job
+		if req.Job.UpgradeMode == nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["upgradeMode"] = "stateless"
+		}
+		if req.Job.JarURI != nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["jarURI"] = *req.Job.JarURI
+		}
+		if req.Job.Parallelism != nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["parallelism"] = *req.Job.Parallelism
+		}
 	}
 	// fmt.Println(tea.Prettify(yaml))
 	return yaml
+}
+
+type DeleteFlinkClusterRequest struct {
+	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"`
+	NameSpace      *string `json:"namespace" default:"default"`
+	Name           *string `json:"name" binding:"required"`
+}
+
+type DeleteFlinkSessionJobRequest struct {
+	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"` // k8s集群名称
+	ClusterName    *string `json:"cluster_name" binding:"required"`     // flink集群名称
+	NameSpace      *string `json:"namespace" default:"default"`
+	JobName        *string `json:"job_name" binding:"required"`
 }
