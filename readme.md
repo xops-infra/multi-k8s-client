@@ -8,5 +8,8 @@ go get -u github.com/xops-infra/multi-k8s-client@main
 ```
 
 ### 更新日志
+- 2024-02
+    - feat: init k8s from kubePath&kubeConfig;
+    - feat: support flink crd list with filter;
 - 2024-01
     - 支持 Flink CRD，支持 Sesson，Application 集群创建，以及对 session集群提交任务接口。（集群需要预先安装好cert-manager和flink-operator-repo，可以参考官网https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-release-1.7/docs/try-flink-kubernetes-operator/quick-start/）

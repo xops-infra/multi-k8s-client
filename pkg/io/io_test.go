@@ -102,8 +102,8 @@ func TestCrdFlinkDeploymentApplySession(t *testing.T) {
 // FlinkSessionJob
 func TestCrdFlinkSessionJobSubmit(t *testing.T) {
 	req := model.CreateFlinkSessionJobRequest{
-		JobName:     tea.String("test-job"),
-		ClusterName: tea.String("session-cluster"),
+		SubmitJobName: tea.String("test-job"),
+		ClusterName:   tea.String("session-cluster"),
 		Job: &model.Job{
 			JarURI:      tea.String("https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.16.1/flink-examples-streaming_2.12-1.16.1-TopSpeedWindowing.jar"),
 			Parallelism: tea.Int32(2),
