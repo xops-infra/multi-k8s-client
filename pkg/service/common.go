@@ -34,7 +34,7 @@ func (s *K8SService) CrdFlinkDeploymentApply(req model.CreateFlinkClusterRequest
 		}
 		return model.CreateFlinkClusterResponse{
 			Result: resp,
-			Info:   fmt.Sprintf("\nsuccess\tkubectl port-forward svc/%s-rest 8081", *req.MetaDataName),
+			Info:   fmt.Sprintf("\nsuccess\tkubectl port-forward svc/%s-rest 8081", *req.ClusterName),
 		}, nil
 	}
 	return model.CreateFlinkClusterResponse{}, fmt.Errorf("cluster not found")

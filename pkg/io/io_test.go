@@ -70,7 +70,7 @@ func TestK8SRbac(t *testing.T) {
 // FlinkApplication Create
 func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 	req := model.CreateFlinkClusterRequest{
-		MetaDataName: tea.String("application-cluster"),
+		ClusterName: tea.String("application-cluster"),
 		Job: &model.Job{
 			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
 			Parallelism: tea.Int32(2),
@@ -88,7 +88,7 @@ func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 // FlinkSession Create
 func TestCrdFlinkDeploymentApplySession(t *testing.T) {
 	req := model.CreateFlinkClusterRequest{
-		MetaDataName: tea.String("session-cluster"),
+		ClusterName: tea.String("session-cluster"),
 	}
 
 	resp, err := client.CrdFlinkDeploymentApply("", req.ToYaml())
