@@ -27,6 +27,27 @@ func init() {
 	})
 }
 
+// TEST GetK8SCluster
+func TestGetK8SCluster(t *testing.T) {
+	clusterNames, err := k8s.GetK8SCluster()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("clusterNames: %v", clusterNames)
+}
+
+// TEST CrdFlinkDeploymentGet
+func TestCrdFlinkDeploymentGet(t *testing.T) {
+
+	resp, err := k8s.CrdFlinkDeploymentList("test", model.Filter{
+		FieldSelector: tea.String("metadata.name=flink-session,metadata.namespace=default"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf(tea.Prettify(resp))
+}
+
 // TEST CrdFlinkDeploymentApply
 func TestCrdFlinkDeploymentApply(t *testing.T) {
 
@@ -51,7 +72,7 @@ func TestCrdFlinkDeploymentDelete(t *testing.T) {
 
 	req := model.DeleteFlinkClusterRequest{
 		K8SClusterName: tea.String("test"),
-		Name:           tea.String("flink-application-cluster"),
+		ClusterName:    tea.String("flink-application-cluster"),
 	}
 	err := k8s.CrdFlinkDeploymentDelete(req)
 	if err != nil {
@@ -64,7 +85,7 @@ func createSessionFlinkCluster() error {
 	// Create session cluster first
 	req := model.CreateFlinkClusterRequest{
 		K8SClusterName: tea.String("test"),
-		ClusterName:    tea.String("session-cluster"),
+		ClusterName:    tea.String("flink-session"),
 		Image:          tea.String("flink:1.17"),
 	}
 	resp, err := k8s.CrdFlinkDeploymentApply(req)
@@ -75,14 +96,27 @@ func createSessionFlinkCluster() error {
 	return nil
 }
 
+// TEST CrdFlinkSessionJobGet
+func TestCrdFlinkSessionJobGet(t *testing.T) {
+	resp, err := k8s.CrdFlinkSessionJobList("test", model.Filter{
+		LabelSelector: tea.String("target.session=flink-session"),
+		FieldSelector: tea.String("metadata.name=flink-session-job-3"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf(tea.Prettify(resp))
+}
+
 // TEST CrdFlinkSessionJobSubmit
 func TestCrdFlinkSessionJobSubmit(t *testing.T) {
 	// createSessionFlinkCluster()
 	// Submit session job
 	sessionJobReq := model.CreateFlinkSessionJobRequest{
 		K8SClusterName: tea.String("test"),
-		JobName:        tea.String("example-job-1"),
-		ClusterName:    tea.String("session-cluster"),
+		NameSpace:      tea.String("default"),
+		SubmitJobName:  tea.String("flink-session-job-4"),
+		ClusterName:    tea.String("flink-session"),
 		Job: &model.Job{
 			JarURI:      tea.String("https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.16.1/flink-examples-streaming_2.12-1.16.1-TopSpeedWindowing.jar"),
 			Parallelism: tea.Int32(2),
@@ -101,8 +135,8 @@ func TestCrdFlinkSessionJobDelete(t *testing.T) {
 
 	req := model.DeleteFlinkSessionJobRequest{
 		K8SClusterName: tea.String("test"),
-		ClusterName:    tea.String("session-cluster"),
-		JobName:        tea.String("example-job"),
+		ClusterName:    tea.String("flink-session"),
+		JobName:        tea.String("flink-session-job-1"),
 	}
 	err := k8s.CrdFlinkSessionJobDelete(req)
 	if err != nil {

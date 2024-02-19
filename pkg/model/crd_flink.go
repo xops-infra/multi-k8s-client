@@ -2,6 +2,32 @@ package model
 
 import "github.com/alibabacloud-go/tea/tea"
 
+type CrdFlinkSessionJobGetResponse struct {
+	Total int                      `json:"total"`
+	Items []CrdFlinkSessionJobItem `json:"items"`
+}
+
+type CrdFlinkSessionJobItem struct {
+	ClusterName    string `json:"cluster_name"`
+	NameSpace      string `json:"namespace"`
+	SubmitJobName  string `json:"submit_job_name"` // 用户提交制定的job名称
+	JobName        string `json:"job_name"`
+	JobId          string `json:"job_id"`
+	Job            any    `json:"job"`
+	Status         string `json:"status"`
+	LifecycleState string `json:"lifecycle_state"`
+}
+
+type CrdFlinkDeploymentGetResponse struct {
+	Total int                  `json:"total"`
+	Items []CrdFlinkDeployment `json:"items"`
+}
+
+type CrdFlinkDeployment struct {
+	ClusterName string `json:"cluster_name"`
+	NameSpace   string `json:"namespace"`
+}
+
 type CreateFlinkClusterRequest struct {
 	K8SClusterName *string      `json:"k8s_cluster_name" binding:"required"` // 初始化的k8s集群名称
 	NameSpace      *string      `json:"namespace" default:"default"`
@@ -127,10 +153,11 @@ type Resource struct {
 	CPU    *int32  `json:"cpu" default:"1"`
 }
 
+// yaml 定义的Json 不用_规范
 type Job struct {
-	JarURI      *string `json:"jar_url"` // jar包路径，application模式必须是local方式将包打包到镜像配合image去做;session模式必须是http方式
+	JarURI      *string `json:"jarURI"` // jar包路径，application模式必须是local方式将包打包到镜像配合image去做;session模式必须是http方式
 	Parallelism *int32  `json:"parallelism"`
-	UpgradeMode *string `json:"upgrade_mode"` // stateless or stateful
+	UpgradeMode *string `json:"upgradeMode"` // stateless or stateful
 }
 
 type CreateFlinkClusterResponse struct {
@@ -141,8 +168,8 @@ type CreateFlinkClusterResponse struct {
 type CreateFlinkSessionJobRequest struct {
 	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"` // k8s集群名称
 	NameSpace      *string `json:"namespace"`                           // 默认是default
-	JobName        *string `json:"job_name" binding:"required"`
-	ClusterName    *string `json:"cluster_name" binding:"required"` // session集群名称 spec.deploymentName
+	SubmitJobName  *string `json:"submit_job_name" binding:"required"`  // 提交job名称,实际集群会自动产生一个 job_name ，防止冲突这里叫submit_job_name
+	ClusterName    *string `json:"cluster_name" binding:"required"`     // session集群名称 spec.deploymentName
 	Job            *Job    `json:"job" binding:"required"`
 }
 
@@ -177,8 +204,8 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 			},
 		},
 	}
-	if req.JobName != nil {
-		yaml["metadata"].(map[string]interface{})["name"] = tea.StringValue(req.JobName)
+	if req.SubmitJobName != nil {
+		yaml["metadata"].(map[string]interface{})["name"] = tea.StringValue(req.SubmitJobName)
 	}
 	if req.ClusterName != nil {
 		yaml["spec"].(map[string]interface{})["deploymentName"] = tea.StringValue(req.ClusterName)
@@ -201,7 +228,7 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 type DeleteFlinkClusterRequest struct {
 	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"` // k8s集群名称
 	NameSpace      *string `json:"namespace" default:"default"`
-	Name           *string `json:"name" binding:"required"`
+	ClusterName    *string `json:"cluster_name" binding:"required"`
 }
 
 type DeleteFlinkSessionJobRequest struct {

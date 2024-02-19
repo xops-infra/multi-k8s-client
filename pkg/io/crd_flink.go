@@ -3,10 +3,20 @@ package io
 import (
 	"context"
 
+	"github.com/xops-infra/multi-k8s-client/pkg/model"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
+
+func (c *k8sClient) CrdFlinkDeploymentList(filter model.Filter) (*unstructured.UnstructuredList, error) {
+	flinkDeploymentRes := GetGVR("flink.apache.org", "v1beta1", "flinkdeployments")
+	result, err := c.dynamic.Resource(flinkDeploymentRes).List(context.TODO(), filter.ToOptions())
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
 
 func (c *k8sClient) CrdFlinkDeploymentApply(namespace string, yaml map[string]any) (any, error) {
 	flinkDeploymentRes := GetGVR("flink.apache.org", "v1beta1", "flinkdeployments")
@@ -35,6 +45,15 @@ func (c *k8sClient) CrdFlinkDeploymentDelete(namespace, name string) error {
 		return err
 	}
 	return nil
+}
+
+func (c *k8sClient) CrdFlinkSessionJobList(filter model.Filter) (*unstructured.UnstructuredList, error) {
+	flinkJobRes := GetGVR("flink.apache.org", "v1beta1", "flinksessionjobs")
+	result, err := c.dynamic.Resource(flinkJobRes).List(context.TODO(), filter.ToOptions())
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (c *k8sClient) CrdFlinkSessionJobSubmit(namespace string, yaml map[string]any) (any, error) {
