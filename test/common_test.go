@@ -32,7 +32,7 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 
 	req := model.CreateFlinkClusterRequest{
 		K8SClusterName: tea.String("test"),
-		MetaDataName:   tea.String("flink-application-cluster"),
+		ClusterName:    tea.String("flink-application-cluster"),
 		Image:          tea.String("flink:1.17"),
 		Job: &model.Job{
 			Parallelism: tea.Int32(4),
@@ -64,7 +64,7 @@ func createSessionFlinkCluster() error {
 	// Create session cluster first
 	req := model.CreateFlinkClusterRequest{
 		K8SClusterName: tea.String("test"),
-		MetaDataName:   tea.String("session-cluster"),
+		ClusterName:    tea.String("session-cluster"),
 		Image:          tea.String("flink:1.17"),
 	}
 	resp, err := k8s.CrdFlinkDeploymentApply(req)

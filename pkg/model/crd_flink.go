@@ -3,9 +3,9 @@ package model
 import "github.com/alibabacloud-go/tea/tea"
 
 type CreateFlinkClusterRequest struct {
-	K8SClusterName *string      `json:"k8s_cluster_name" binding:"required"`
+	K8SClusterName *string      `json:"k8s_cluster_name" binding:"required"` // 初始化的k8s集群名称
 	NameSpace      *string      `json:"namespace" default:"default"`
-	MetaDataName   *string      `json:"metadata_name" binding:"required"` // metadata.name
+	ClusterName    *string      `json:"cluster_name" binding:"required"` // metadata.name
 	Image          *string      `json:"image" default:"flink:1.17"`
 	Version        *string      `json:"version" default:"v1_17"`
 	ServiceAccount *string      `json:"service_account" default:"flink"`
@@ -69,8 +69,8 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 			},
 		},
 	}
-	if req.MetaDataName != nil {
-		yaml["metadata"].(map[string]interface{})["name"] = *req.MetaDataName
+	if req.ClusterName != nil {
+		yaml["metadata"].(map[string]interface{})["name"] = *req.ClusterName
 	}
 	if req.NameSpace != nil {
 		yaml["metadata"].(map[string]interface{})["namespace"] = *req.NameSpace
@@ -128,9 +128,9 @@ type Resource struct {
 }
 
 type Job struct {
-	JarURI      *string `json:"jar_url" binding:"required"` // jar包路径，application模式必须是local方式将包打包到镜像配合image去做;session模式必须是http方式
-	Parallelism *int32  `json:"parallelism" binding:"required"`
-	UpgradeMode *string `json:"upgrade_mode" binding:"required"` // stateless or stateful
+	JarURI      *string `json:"jar_url"` // jar包路径，application模式必须是local方式将包打包到镜像配合image去做;session模式必须是http方式
+	Parallelism *int32  `json:"parallelism"`
+	UpgradeMode *string `json:"upgrade_mode"` // stateless or stateful
 }
 
 type CreateFlinkClusterResponse struct {
@@ -139,8 +139,8 @@ type CreateFlinkClusterResponse struct {
 }
 
 type CreateFlinkSessionJobRequest struct {
-	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"`
-	NameSpace      *string `json:"namespace"` // 默认是default
+	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"` // k8s集群名称
+	NameSpace      *string `json:"namespace"`                           // 默认是default
 	JobName        *string `json:"job_name" binding:"required"`
 	ClusterName    *string `json:"cluster_name" binding:"required"` // session集群名称 spec.deploymentName
 	Job            *Job    `json:"job" binding:"required"`
@@ -199,7 +199,7 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 }
 
 type DeleteFlinkClusterRequest struct {
-	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"`
+	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"` // k8s集群名称
 	NameSpace      *string `json:"namespace" default:"default"`
 	Name           *string `json:"name" binding:"required"`
 }
