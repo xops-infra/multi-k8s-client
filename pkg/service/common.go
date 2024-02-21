@@ -90,38 +90,27 @@ func (s *K8SService) CrdFlinkSessionJobList(k8sClusterName string, filter model.
 		}
 		var items []model.CrdFlinkSessionJobItem
 		for _, item := range resp.Items {
-			clusterName, ok := item.Object["spec"].(map[string]any)["deploymentName"].(string)
-			if !ok {
-				clusterName = "-"
-			}
-			jobName, ok := item.Object["status"].(map[string]any)["jobStatus"].(map[string]any)["jobName"].(string)
-			if !ok {
-				jobName = "-"
-			}
-			jobId, ok := item.Object["status"].(map[string]any)["jobStatus"].(map[string]any)["jobId"].(string)
-			if !ok {
-				jobId = "-"
-			}
-
-			status := item.Object["status"].(map[string]any)["jobStatus"].(map[string]any)["state"].(string)
-			if status == "" {
-				status = "-"
-			}
-			lifecycleState, ok := item.Object["status"].(map[string]any)["lifecycleState"].(string)
-			if !ok {
-				lifecycleState = "-"
-			}
-			// fmt.Println(tea.Prettify(item))
-			items = append(items, model.CrdFlinkSessionJobItem{
-				ClusterName:    clusterName,
-				JobName:        jobName,
+			job := model.CrdFlinkSessionJobItem{
+				ClusterName:    item.Object["spec"].(map[string]any)["deploymentName"].(string),
 				SubmitJobName:  item.GetName(),
-				JobId:          jobId,
-				Status:         status,
-				LifecycleState: lifecycleState,
+				LifecycleState: item.Object["status"].(map[string]any)["lifecycleState"].(string),
 				Job:            item.Object["spec"].(map[string]any)["job"],
 				NameSpace:      item.GetNamespace(),
-			})
+				Error:          item.Object["status"].(map[string]any)["error"],
+			}
+
+			// fmt.Println(tea.Prettify(item))
+			jobStatus := item.Object["status"].(map[string]any)["jobStatus"].(map[string]any)
+			if jobStatus["state"] != nil {
+				job.Status = jobStatus["state"].(string)
+			}
+			if jobStatus["jobName"] != nil {
+				job.JobName = jobStatus["jobName"].(string)
+			}
+			if jobStatus["jobId"] != nil {
+				job.JobId = jobStatus["jobId"].(string)
+			}
+			items = append(items, job)
 		}
 		return model.CrdFlinkSessionJobGetResponse{
 			Total: len(resp.Items),

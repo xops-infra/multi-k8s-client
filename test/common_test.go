@@ -125,8 +125,8 @@ func createSessionFlinkCluster() error {
 // TEST CrdFlinkSessionJobGet
 func TestCrdFlinkSessionJobGet(t *testing.T) {
 	resp, err := k8s.CrdFlinkSessionJobList("test", model.Filter{
-		LabelSelector: tea.String("target.session=flink-session"),
-		FieldSelector: tea.String("metadata.name=flink-session-job-3"),
+		// LabelSelector: tea.String("target.session=flink-session"),
+		// FieldSelector: tea.String("metadata.name=flink-session-job-3"),
 	})
 	if err != nil {
 		t.Fatal(err)

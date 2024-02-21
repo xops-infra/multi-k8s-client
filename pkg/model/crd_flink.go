@@ -16,6 +16,7 @@ type CrdFlinkSessionJobItem struct {
 	Job            any    `json:"job"`
 	Status         string `json:"status"`
 	LifecycleState string `json:"lifecycle_state"`
+	Error          any    `json:"error"`
 }
 
 type CrdFlinkDeploymentGetResponse struct {
