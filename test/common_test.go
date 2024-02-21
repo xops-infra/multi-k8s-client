@@ -141,13 +141,14 @@ func TestCrdFlinkSessionJobSubmit(t *testing.T) {
 	sessionJobReq := model.CreateFlinkSessionJobRequest{
 		K8SClusterName: tea.String("test"),
 		NameSpace:      tea.String("default"),
-		SubmitJobName:  tea.String("flink-session-job-4"),
-		ClusterName:    tea.String("flink-session"),
+		SubmitJobName:  tea.String("flink-session-job"),
+		ClusterName:    tea.String("flink-session-13"),
 		Job: &model.Job{
 			JarURI:      tea.String("https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.16.1/flink-examples-streaming_2.12-1.16.1-TopSpeedWindowing.jar"),
 			Parallelism: tea.Int32(2),
 			UpgradeMode: tea.String("stateless"),
 		},
+		Creater: tea.String("xops"),
 	}
 	sessionJobResp, sessionJobErr := k8s.CrdFlinkSessionJobSubmit(sessionJobReq)
 	if sessionJobErr != nil {

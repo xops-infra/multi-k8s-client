@@ -16,6 +16,7 @@ type CrdFlinkSessionJobItem struct {
 	Job            any    `json:"job"`
 	Status         string `json:"status"`
 	LifecycleState string `json:"lifecycle_state"`
+	Annotation     any    `json:"annotation"` // 集群描述信息
 	Error          any    `json:"error"`
 }
 
@@ -294,6 +295,7 @@ type CreateFlinkSessionJobRequest struct {
 	SubmitJobName  *string `json:"submit_job_name" binding:"required"`  // 提交job名称,实际集群会自动产生一个 job_name ，防止冲突这里叫submit_job_name
 	ClusterName    *string `json:"cluster_name" binding:"required"`     // session集群名称 spec.deploymentName
 	Job            *Job    `json:"job" binding:"required"`
+	Creater        *string `json:"creater"` // 创建人
 }
 
 /*
@@ -332,6 +334,11 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 	}
 	if req.ClusterName != nil {
 		yaml["spec"].(map[string]interface{})["deploymentName"] = tea.StringValue(req.ClusterName)
+	}
+	if req.Creater != nil {
+		yaml["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{
+			"created-by": *req.Creater,
+		}
 	}
 	if req.Job != nil {
 		if req.Job.UpgradeMode == nil {
