@@ -2,8 +2,10 @@ package test
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/joho/godotenv"
@@ -48,14 +50,37 @@ func TestCrdFlinkDeploymentGet(t *testing.T) {
 	t.Logf(tea.Prettify(resp))
 }
 
+func generateRandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
 // TEST CrdFlinkDeploymentApply
 func TestCrdFlinkDeploymentApply(t *testing.T) {
 
 	req := model.CreateFlinkClusterRequest{
 		K8SClusterName: tea.String("test"),
-		ClusterName:    tea.String("flink-application-cluster"),
-		Image:          tea.String("flink:1.17"),
+		ClusterName:    tea.String("flink-application-13-" + generateRandomString(6)),
+		Image:          tea.String("flink:1.13"),
+		Version:        tea.String("v1_13"),
+		FlinkConfiguration: map[string]any{
+			"taskmanager.numberOfTaskSlots": "2",
+			"state.savepoints.dir":          "file:///opt/flink/flink-data/savepoints",
+			"state.checkpoints.dir":         "file:///opt/flink/flink-data/checkpoints",
+			"high-availability":             "org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory",
+			"high-availability.storageDir":  "file:///opt/flink/flink-data/ha",
+			"classloader.resolve-order":     "parent-first",
+			"fs.s3a.access.key":             "minio",
+			"fs.s3a.secret.key":             "minio123",
+		},
 		Job: &model.Job{
+			Args:        []string{"-p", "4"},
 			Parallelism: tea.Int32(4),
 			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
 		},

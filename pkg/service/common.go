@@ -50,6 +50,7 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 				Annotation:                 item.GetAnnotations(),
 				ClusterInfo:                item.Object["status"].(map[string]any)["clusterInfo"],
 				JobManagerDeploymentStatus: item.Object["status"].(map[string]any)["jobManagerDeploymentStatus"],
+				Error:                      item.Object["status"].(map[string]any)["error"],
 			})
 		}
 		return model.CrdFlinkDeploymentGetResponse{
