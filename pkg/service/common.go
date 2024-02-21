@@ -97,6 +97,7 @@ func (s *K8SService) CrdFlinkSessionJobList(k8sClusterName string, filter model.
 				Job:            item.Object["spec"].(map[string]any)["job"],
 				NameSpace:      item.GetNamespace(),
 				Error:          item.Object["status"].(map[string]any)["error"],
+				Annotation:     item.GetAnnotations(),
 			}
 
 			// fmt.Println(tea.Prettify(item))
