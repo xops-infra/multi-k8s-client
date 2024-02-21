@@ -40,11 +40,12 @@ type CreateFlinkClusterRequest struct {
 	Image              *string        `json:"image" default:"flink:1.17"`
 	Version            *string        `json:"version" default:"v1_17"`
 	ServiceAccount     *string        `json:"service_account" default:"flink"`
-	FlinkConfiguration map[string]any `json:"flink_configuration"`             // flink配置,键值对的方式比如: {"taskmanager.numberOfTaskSlots": "2"}
-	EnableFluentit     *bool          `json:"enableFluentbit" default:"false"` // sidecar fluentbit
+	FlinkConfiguration map[string]any `json:"flink_configuration"`              // flink配置,键值对的方式比如: {"taskmanager.numberOfTaskSlots": "2"}
+	EnableFluentit     *bool          `json:"enable_fluentbit" default:"false"` // sidecar fluentbit
 	TaskManager        *TaskManager   `json:"task_manager"`
 	JobManager         *JobManager    `json:"job_manager"`
-	Job                *Job           `json:"job"` // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
+	Job                *Job           `json:"job"`     // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
+	Creater            *string        `json:"creater"` // 创建人
 }
 
 /*
@@ -214,6 +215,11 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	}
 	if req.NameSpace != nil {
 		yaml["metadata"].(map[string]interface{})["namespace"] = *req.NameSpace
+	}
+	if req.Creater != nil {
+		yaml["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{
+			"CreatedBy": *req.Creater,
+		}
 	}
 	if req.Image != nil {
 		yaml["spec"].(map[string]interface{})["image"] = *req.Image
