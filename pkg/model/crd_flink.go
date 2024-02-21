@@ -24,8 +24,12 @@ type CrdFlinkDeploymentGetResponse struct {
 }
 
 type CrdFlinkDeployment struct {
-	ClusterName string `json:"cluster_name"`
-	NameSpace   string `json:"namespace"`
+	ClusterName                string `json:"cluster_name"`
+	NameSpace                  string `json:"namespace"`
+	ClusterInfo                any    `json:"cluster_info"`
+	JobManagerDeploymentStatus any    `json:"job_manager_deployment_status"`
+	JobStatus                  any    `json:"status"`     // 集群状态信息
+	Annotation                 any    `json:"annotation"` // 集群描述信息
 }
 
 type CreateFlinkClusterRequest struct {
@@ -94,7 +98,7 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 				},
 			},
 		},
-	}
+	} // default
 	if req.ClusterName != nil {
 		yaml["metadata"].(map[string]interface{})["name"] = *req.ClusterName
 	}
@@ -203,7 +207,7 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 				"upgradeMode": "stateless",
 			},
 		},
-	}
+	} // default
 	if req.SubmitJobName != nil {
 		yaml["metadata"].(map[string]interface{})["name"] = tea.StringValue(req.SubmitJobName)
 	}
