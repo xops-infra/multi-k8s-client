@@ -1,6 +1,8 @@
 package model
 
-import "github.com/alibabacloud-go/tea/tea"
+import (
+	"github.com/alibabacloud-go/tea/tea"
+)
 
 type CrdFlinkSessionJobGetResponse struct {
 	Total int                      `json:"total"`
@@ -46,8 +48,8 @@ type CreateFlinkClusterRequest struct {
 	EnableFluentit     *bool          `json:"enable_fluentbit" default:"false"` // sidecar fluentbit
 	TaskManager        *TaskManager   `json:"task_manager"`
 	JobManager         *JobManager    `json:"job_manager"`
-	Job                *Job           `json:"job"`     // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
-	Creater            *string        `json:"creater"` // 创建人
+	Job                *Job           `json:"job"`       // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
+	Submitter          *string        `json:"submitter"` // 提交人
 }
 
 /*
@@ -218,9 +220,9 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	if req.NameSpace != nil {
 		yaml["metadata"].(map[string]interface{})["namespace"] = *req.NameSpace
 	}
-	if req.Creater != nil {
+	if req.Submitter != nil {
 		yaml["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{
-			"CreatedBy": *req.Creater,
+			"CreatedBy": *req.Submitter,
 		}
 	}
 	if req.Image != nil {
@@ -278,10 +280,10 @@ type Resource struct {
 
 // yaml 定义的Json 不用_规范
 type Job struct {
-	JarURI      *string  `json:"jarURI"` // jar包路径，application模式必须是local方式将包打包到镜像配合image去做;session模式必须是http方式
+	JarURI      *string  `json:"jar_url"` // jar包路径，application模式必须是local方式将包打包到镜像配合image去做;session模式必须是http方式
 	Parallelism *int32   `json:"parallelism"`
-	UpgradeMode *string  `json:"upgradeMode"` // stateless or stateful
-	Args        []string `json:"args"`        // 启动参数
+	UpgradeMode *string  `json:"upgrade_mode"` // stateless or stateful
+	Args        []string `json:"args"`         // 启动参数
 }
 
 type CreateFlinkClusterResponse struct {
@@ -295,7 +297,7 @@ type CreateFlinkSessionJobRequest struct {
 	SubmitJobName  *string `json:"submit_job_name" binding:"required"`  // 提交job名称,实际集群会自动产生一个 job_name ，防止冲突这里叫submit_job_name
 	ClusterName    *string `json:"cluster_name" binding:"required"`     // session集群名称 spec.deploymentName
 	Job            *Job    `json:"job" binding:"required"`
-	Creater        *string `json:"creater"` // 创建人
+	Submitter      *string `json:"submitter"` // 提交人
 }
 
 /*
@@ -322,11 +324,6 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 		},
 		"spec": map[string]interface{}{
 			"deploymentName": "basic-example-session",
-			"job": map[string]interface{}{
-				"jarURI":      "https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.16.1/flink-examples-streaming_2.12-1.16.1-TopSpeedWindowing.jar",
-				"parallelism": 4,
-				"upgradeMode": "stateless",
-			},
 		},
 	} // default
 	if req.SubmitJobName != nil {
@@ -335,20 +332,27 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 	if req.ClusterName != nil {
 		yaml["spec"].(map[string]interface{})["deploymentName"] = tea.StringValue(req.ClusterName)
 	}
-	if req.Creater != nil {
+	if req.Submitter != nil {
 		yaml["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{
-			"created-by": *req.Creater,
+			"created-by": *req.Submitter,
 		}
 	}
 	if req.Job != nil {
-		if req.Job.UpgradeMode == nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["upgradeMode"] = "stateless"
+		yaml["spec"].(map[string]interface{})["job"] = map[string]interface{}{
+			"parallelism": 4,
+			"upgradeMode": "stateless",
+		}
+		if req.Job.UpgradeMode != nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["upgradeMode"] = *req.Job.UpgradeMode
 		}
 		if req.Job.JarURI != nil {
 			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["jarURI"] = *req.Job.JarURI
 		}
 		if req.Job.Parallelism != nil {
 			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["parallelism"] = *req.Job.Parallelism
+		}
+		if req.Job.Args != nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["args"] = req.Job.Args
 		}
 	}
 	// fmt.Println(tea.Prettify(yaml))
