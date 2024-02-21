@@ -69,7 +69,7 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 		ClusterName:    tea.String("flink-application-13-" + generateRandomString(6)),
 		Image:          tea.String("flink:1.13"),
 		Version:        tea.String("v1_13"),
-		Creater:        tea.String("xops"),
+		Submitter:      tea.String("xops"),
 		FlinkConfiguration: map[string]any{
 			"taskmanager.numberOfTaskSlots": "2",
 			"state.savepoints.dir":          "file:///opt/flink/flink-data/savepoints",
@@ -141,14 +141,14 @@ func TestCrdFlinkSessionJobSubmit(t *testing.T) {
 	sessionJobReq := model.CreateFlinkSessionJobRequest{
 		K8SClusterName: tea.String("test"),
 		NameSpace:      tea.String("default"),
-		SubmitJobName:  tea.String("flink-session-job"),
+		SubmitJobName:  tea.String("flink-session-job-13"),
 		ClusterName:    tea.String("flink-session-13"),
 		Job: &model.Job{
-			JarURI:      tea.String("https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.16.1/flink-examples-streaming_2.12-1.16.1-TopSpeedWindowing.jar"),
+			JarURI:      tea.String("https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.13.6/flink-examples-streaming_2.12-1.13.6-TopSpeedWindowing.jar"),
 			Parallelism: tea.Int32(2),
 			UpgradeMode: tea.String("stateless"),
 		},
-		Creater: tea.String("xops"),
+		Submitter: tea.String("xops"),
 	}
 	sessionJobResp, sessionJobErr := k8s.CrdFlinkSessionJobSubmit(sessionJobReq)
 	if sessionJobErr != nil {
