@@ -69,6 +69,7 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 		ClusterName:    tea.String("flink-application-13-" + generateRandomString(6)),
 		Image:          tea.String("flink:1.13"),
 		Version:        tea.String("v1_13"),
+		Creater:        tea.String("xops"),
 		FlinkConfiguration: map[string]any{
 			"taskmanager.numberOfTaskSlots": "2",
 			"state.savepoints.dir":          "file:///opt/flink/flink-data/savepoints",
