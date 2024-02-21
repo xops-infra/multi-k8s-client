@@ -21,7 +21,7 @@ func init() {
 	k8s = service.NewK8SService(model.K8SConfig{
 		Clusters: map[string]model.Cluster{
 			"test": {
-				KubeConfig: tea.String(os.Getenv("KUBECONFIG")),
+				KubeConfig: tea.String(os.Getenv("KUBE_CONFIG")),
 			},
 		},
 	})
@@ -40,7 +40,7 @@ func TestGetK8SCluster(t *testing.T) {
 func TestCrdFlinkDeploymentGet(t *testing.T) {
 
 	resp, err := k8s.CrdFlinkDeploymentList("test", model.Filter{
-		FieldSelector: tea.String("metadata.name=flink-session,metadata.namespace=default"),
+		// FieldSelector: tea.String("metadata.name=flink-session-17,metadata.namespace=default"),
 	})
 	if err != nil {
 		t.Fatal(err)
