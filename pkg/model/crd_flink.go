@@ -234,11 +234,37 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	if req.FlinkConfiguration != nil {
 		yaml["spec"].(map[string]interface{})["flinkConfiguration"] = req.FlinkConfiguration
 	}
-	if req.TaskManager != nil && req.TaskManager.Resource != nil {
-		yaml["spec"].(map[string]interface{})["taskManager"].(map[string]interface{})["resource"] = req.TaskManager.Resource
+	if req.TaskManager != nil {
+		if req.TaskManager.Resource != nil {
+			yaml["spec"].(map[string]interface{})["taskManager"].(map[string]interface{})["resource"] = req.TaskManager.Resource
+		}
+		if req.TaskManager.NodeSelector != nil {
+			yaml["spec"].(map[string]interface{})["taskManager"].(map[string]interface{})["podTemplate"] = map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Pod",
+				"metadata": map[string]interface{}{
+					"name": "task-manager-pod-template",
+				},
+				"spec": map[string]interface{}{},
+			}
+			yaml["spec"].(map[string]interface{})["taskManager"].(map[string]interface{})["podTemplate"].(map[string]interface{})["spec"].(map[string]interface{})["nodeSelector"] = *req.TaskManager.NodeSelector
+		}
 	}
-	if req.JobManager != nil && req.JobManager.Resource != nil {
-		yaml["spec"].(map[string]interface{})["jobManager"].(map[string]interface{})["resource"] = req.JobManager.Resource
+	if req.JobManager != nil {
+		if req.JobManager.Resource != nil {
+			yaml["spec"].(map[string]interface{})["jobManager"].(map[string]interface{})["resource"] = req.JobManager.Resource
+		}
+		if req.JobManager.NodeSelector != nil {
+			yaml["spec"].(map[string]interface{})["jobManager"].(map[string]interface{})["podTemplate"] = map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Pod",
+				"metadata": map[string]interface{}{
+					"name": "job-manager-pod-template",
+				},
+				"spec": map[string]interface{}{},
+			}
+			yaml["spec"].(map[string]interface{})["jobManager"].(map[string]interface{})["podTemplate"].(map[string]interface{})["spec"].(map[string]interface{})["nodeSelector"] = *req.JobManager.NodeSelector
+		}
 	}
 	if req.Job != nil {
 		yaml["spec"].(map[string]interface{})["job"] = map[string]interface{}{
@@ -266,11 +292,13 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 }
 
 type TaskManager struct {
-	Resource *Resource `json:"resource"`
+	Resource     *Resource          `json:"resource"`
+	NodeSelector *map[string]string `json:"node_selector"`
 }
 
 type JobManager struct {
-	Resource *Resource `json:"resource"`
+	Resource     *Resource          `json:"resource"`
+	NodeSelector *map[string]string `json:"node_selector"`
 }
 
 type Resource struct {
