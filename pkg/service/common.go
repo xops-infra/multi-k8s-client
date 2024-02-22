@@ -90,10 +90,16 @@ func (s *K8SService) CrdFlinkSessionJobList(k8sClusterName string, filter model.
 		}
 		var items []model.CrdFlinkSessionJobItem
 		for _, item := range resp.Items {
+			var lifecycleState string
+			if _, ok := item.Object["status"].(map[string]any)["lifecycleState"]; !ok {
+				lifecycleState = "-"
+			} else {
+				lifecycleState = item.Object["status"].(map[string]any)["lifecycleState"].(string)
+			}
 			job := model.CrdFlinkSessionJobItem{
 				ClusterName:    item.Object["spec"].(map[string]any)["deploymentName"].(string),
 				SubmitJobName:  item.GetName(),
-				LifecycleState: item.Object["status"].(map[string]any)["lifecycleState"].(string),
+				LifecycleState: lifecycleState,
 				Job:            item.Object["spec"].(map[string]any)["job"],
 				NameSpace:      item.GetNamespace(),
 				Error:          item.Object["status"].(map[string]any)["error"],
