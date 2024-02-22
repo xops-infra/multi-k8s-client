@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -66,7 +67,7 @@ func generateRandomString(length int) string {
 
 // TEST CrdFlinkDeploymentApply
 func TestCrdFlinkDeploymentApply(t *testing.T) {
-
+	s3Path := fmt.Sprintf("%s/%s/%s/flink-data/", os.Getenv("S3_BUCKET"), "test", time.Now().Format("20060102150405"))
 	req := model.CreateFlinkClusterRequest{
 		K8SClusterName: tea.String("dev"),
 		ClusterName:    tea.String("flink-application-13-" + generateRandomString(6)),
@@ -74,6 +75,12 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 		Version:        tea.String("v1_13"),
 		Submitter:      tea.String("xops"),
 		NameSpace:      tea.String("flink"),
+		Env: []model.Env{
+			{
+				Name:  tea.String("ENABLE_BUILT_IN_PLUGINS"),
+				Value: tea.String("flink-s3-fs-hadoop-1.13.6.jar;flink-s3-fs-presto-1.13.6.jar"),
+			},
+		},
 		TaskManager: &model.TaskManager{
 			NodeSelector: &map[string]string{"env": "flink"},
 			Resource:     &model.Resource{Memory: tea.String("1024m"), CPU: tea.Int32(2)},
@@ -84,17 +91,17 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 		},
 		FlinkConfiguration: map[string]any{
 			"taskmanager.numberOfTaskSlots": "2",
-			"state.savepoints.dir":          "file:///opt/flink/flink-data/savepoints",
-			"state.checkpoints.dir":         "file:///opt/flink/flink-data/checkpoints",
+			"state.savepoints.dir":          fmt.Sprintf("s3a://%s/savepoints", strings.TrimSuffix(s3Path, "/")),
+			"state.checkpoints.dir":         fmt.Sprintf("s3a://%s/checkpoints", strings.TrimSuffix(s3Path, "/")),
 			"high-availability":             "org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory",
-			"high-availability.storageDir":  "file:///opt/flink/flink-data/ha",
+			"high-availability.storageDir":  fmt.Sprintf("s3a://%s/ha", strings.TrimSuffix(s3Path, "/")),
 			"classloader.resolve-order":     "parent-first",
-			"fs.s3a.access.key":             "minio",
-			"fs.s3a.secret.key":             "minio123",
+			"fs.s3a.access.key":             os.Getenv("AWS_ACCESS_KEY_ID"),
+			"fs.s3a.secret.key":             os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			"fs.s3a.endpoint":               "cos.ap-shanghai.myqcloud.com",
 		},
 		Job: &model.Job{
-			Args:        []string{"-p", "4"},
-			Parallelism: tea.Int32(4),
+			Parallelism: tea.Int32(2),
 			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
 		},
 	}
