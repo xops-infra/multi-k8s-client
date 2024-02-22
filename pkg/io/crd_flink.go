@@ -11,7 +11,13 @@ import (
 
 func (c *k8sClient) CrdFlinkDeploymentList(filter model.Filter) (*unstructured.UnstructuredList, error) {
 	flinkDeploymentRes := GetGVR("flink.apache.org", "v1beta1", "flinkdeployments")
-	result, err := c.dynamic.Resource(flinkDeploymentRes).List(context.TODO(), filter.ToOptions())
+	var namespace string
+	if filter.NameSpace != nil {
+		namespace = *filter.NameSpace
+	} else {
+		namespace = apiv1.NamespaceDefault
+	}
+	result, err := c.dynamic.Resource(flinkDeploymentRes).Namespace(namespace).List(context.TODO(), filter.ToOptions())
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +55,13 @@ func (c *k8sClient) CrdFlinkDeploymentDelete(namespace, name string) error {
 
 func (c *k8sClient) CrdFlinkSessionJobList(filter model.Filter) (*unstructured.UnstructuredList, error) {
 	flinkJobRes := GetGVR("flink.apache.org", "v1beta1", "flinksessionjobs")
-	result, err := c.dynamic.Resource(flinkJobRes).List(context.TODO(), filter.ToOptions())
+	var namespace string
+	if filter.NameSpace != nil {
+		namespace = *filter.NameSpace
+	} else {
+		namespace = apiv1.NamespaceDefault
+	}
+	result, err := c.dynamic.Resource(flinkJobRes).Namespace(namespace).List(context.TODO(), filter.ToOptions())
 	if err != nil {
 		return nil, err
 	}

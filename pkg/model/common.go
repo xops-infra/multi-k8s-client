@@ -8,6 +8,7 @@ import (
 )
 
 type Filter struct {
+	NameSpace     *string `json:"namespace"`      // default: default
 	LabelSelector *string `json:"label_selector"` // key1=value1,key2=value2
 	FieldSelector *string `json:"field_selector"` // key1=value1,key2=value2 "metadata.name=flink-session,metadata.namespace=default
 }

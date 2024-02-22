@@ -45,7 +45,8 @@ func TestGetK8SCluster(t *testing.T) {
 // TEST CrdFlinkDeploymentGet
 func TestCrdFlinkDeploymentGet(t *testing.T) {
 
-	resp, err := k8s.CrdFlinkDeploymentList("test", model.Filter{
+	resp, err := k8s.CrdFlinkDeploymentList("dev", model.Filter{
+		NameSpace: tea.String("flink"),
 		// FieldSelector: tea.String("metadata.name=flink-session-17,metadata.namespace=default"),
 	})
 	if err != nil {
@@ -143,7 +144,8 @@ func createSessionFlinkCluster() error {
 
 // TEST CrdFlinkSessionJobGet
 func TestCrdFlinkSessionJobGet(t *testing.T) {
-	resp, err := k8s.CrdFlinkSessionJobList("test", model.Filter{
+	resp, err := k8s.CrdFlinkSessionJobList("dev", model.Filter{
+		NameSpace: tea.String("flink"),
 		// LabelSelector: tea.String("target.session=flink-session"),
 		// FieldSelector: tea.String("metadata.name=flink-session-job-3"),
 	})
