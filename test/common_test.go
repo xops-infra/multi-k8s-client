@@ -25,6 +25,9 @@ func init() {
 			"test": {
 				KubeConfig: tea.String(os.Getenv("KUBE_CONFIG")),
 			},
+			"dev": {
+				KubeConfig: tea.String(os.Getenv("KUBEDEV_CONFIG")),
+			},
 		},
 	})
 }
@@ -65,11 +68,20 @@ func generateRandomString(length int) string {
 func TestCrdFlinkDeploymentApply(t *testing.T) {
 
 	req := model.CreateFlinkClusterRequest{
-		K8SClusterName: tea.String("test"),
+		K8SClusterName: tea.String("dev"),
 		ClusterName:    tea.String("flink-application-13-" + generateRandomString(6)),
 		Image:          tea.String("flink:1.13"),
 		Version:        tea.String("v1_13"),
 		Submitter:      tea.String("xops"),
+		NameSpace:      tea.String("flink"),
+		TaskManager: &model.TaskManager{
+			NodeSelector: &map[string]string{"env": "flink"},
+			Resource:     &model.Resource{Memory: tea.String("1024m"), CPU: tea.Int32(2)},
+		},
+		JobManager: &model.JobManager{
+			NodeSelector: &map[string]string{"env": "flink"},
+			Resource:     &model.Resource{Memory: tea.String("2048m"), CPU: tea.Int32(1)},
+		},
 		FlinkConfiguration: map[string]any{
 			"taskmanager.numberOfTaskSlots": "2",
 			"state.savepoints.dir":          "file:///opt/flink/flink-data/savepoints",
@@ -98,7 +110,7 @@ func TestCrdFlinkDeploymentDelete(t *testing.T) {
 
 	req := model.DeleteFlinkClusterRequest{
 		K8SClusterName: tea.String("test"),
-		ClusterName:    tea.String("flink-application-cluster"),
+		ClusterName:    tea.String("flink-application-13-csdtr8"),
 	}
 	err := k8s.CrdFlinkDeploymentDelete(req)
 	if err != nil {
@@ -163,7 +175,7 @@ func TestCrdFlinkSessionJobDelete(t *testing.T) {
 	req := model.DeleteFlinkSessionJobRequest{
 		K8SClusterName: tea.String("test"),
 		ClusterName:    tea.String("flink-session"),
-		JobName:        tea.String("flink-session-job-1"),
+		JobName:        tea.String("flink-session-job-4"),
 	}
 	err := k8s.CrdFlinkSessionJobDelete(req)
 	if err != nil {
