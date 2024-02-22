@@ -46,10 +46,16 @@ type CreateFlinkClusterRequest struct {
 	ServiceAccount     *string        `json:"service_account" default:"flink"`
 	FlinkConfiguration map[string]any `json:"flink_configuration"`              // flink配置,键值对的方式比如: {"taskmanager.numberOfTaskSlots": "2"}
 	EnableFluentit     *bool          `json:"enable_fluentbit" default:"false"` // sidecar fluentbit
+	Env                []Env          `json:"env"`                              // 环境变量,同时给JM和TM设置环境变量
 	TaskManager        *TaskManager   `json:"task_manager"`
 	JobManager         *JobManager    `json:"job_manager"`
 	Job                *Job           `json:"job"`       // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
 	Submitter          *string        `json:"submitter"` // 提交人
+}
+
+type Env struct {
+	Name  *string `json:"name"`
+	Value *string `json:"value"`
 }
 
 /*
@@ -171,7 +177,43 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 			},
 		},
 	} // default
-	if tea.BoolValue(req.EnableFluentit) {
+
+	if req.EnableFluentit != nil || len(req.Env) != 0 {
+
+		mainContainer := map[string]any{
+			"name": "flink-main-container",
+			"volumeMounts": []map[string]interface{}{
+				{
+					"mountPath": "/opt/flink/log",
+					"name":      "flink-logs",
+				},
+			},
+		}
+		fluentitContainer := map[string]any{
+			"name":  "fluentbit",
+			"image": "fluent/fluent-bit:1.8.12-debug",
+			"command": []string{
+				"sh",
+				"-c",
+				"/fluent-bit/bin/fluent-bit -i tail -p path=/flink-logs/*.log -p multiline.parser=java -o stdout",
+			},
+			"volumeMounts": []map[string]interface{}{
+				{
+					"mountPath": "/flink-logs",
+					"name":      "flink-logs",
+				},
+			},
+		}
+		if len(req.Env) != 0 {
+			mainContainer["env"] = req.Env
+		}
+
+		containers := []map[string]any{
+			mainContainer,
+		}
+		if tea.BoolValue(req.EnableFluentit) {
+			containers = append(containers, fluentitContainer)
+		}
 		yaml["spec"].(map[string]interface{})["podTemplate"] = map[string]interface{}{
 			"apiVersion": "v1",
 			"kind":       "Pod",
@@ -179,40 +221,18 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 				"name": "pod-template",
 			},
 			"spec": map[string]interface{}{
-				"containers": []map[string]interface{}{
-					{
-						"name": "flink-main-container",
-						"volumeMounts": []map[string]interface{}{
-							{
-								"mountPath": "/opt/flink/log",
-								"name":      "flink-logs",
-							},
-						},
-					},
-					{
-						"name":  "fluentbit",
-						"image": "fluent/fluent-bit:1.8.12-debug",
-						"command": []string{
-							"sh",
-							"-c",
-							"/fluent-bit/bin/fluent-bit -i tail -p path=/flink-logs/*.log -p multiline.parser=java -o stdout",
-						},
-						"volumeMounts": []map[string]interface{}{
-							{
-								"mountPath": "/flink-logs",
-								"name":      "flink-logs",
-							},
-						},
-					},
-				},
+				"containers": containers,
 				"volumes": []map[string]interface{}{
 					{
-						"name":     "flink-logs",
-						"emptyDir": map[string]interface{}{},
+						"name": "flink-logs",
+						"emptyDir": map[string]interface{}{
+							"medium": "Memory",
+						},
 					},
 				},
 			},
 		}
+
 	}
 	if req.ClusterName != nil {
 		yaml["metadata"].(map[string]interface{})["name"] = *req.ClusterName
