@@ -67,6 +67,18 @@ func TestK8SRbac(t *testing.T) {
 	}
 }
 
+// CrdFlinkDeploymentList
+func TestCrdFlinkDeploymentList(t *testing.T) {
+	resp, err := client.CrdFlinkDeploymentList(model.Filter{
+		NameSpace: tea.String("flink"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("List FlinkDeployment success", tea.Prettify(resp.Items))
+
+}
+
 // FlinkApplication Create
 func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 	req := model.CreateFlinkClusterRequest{

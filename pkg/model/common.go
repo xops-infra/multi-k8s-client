@@ -39,17 +39,28 @@ type K8SIO interface {
 	CrdFlinkSessionJobList(Filter) (*unstructured.UnstructuredList, error)
 	CrdFlinkSessionJobSubmit(namespace string, yaml map[string]any) (any, error) // for flink session cluster, can't be used for application cluster
 	CrdFlinkSessionJobDelete(namespace, name string) error
+
+	// CRD Spark
+	CrdSparkApplicationList(Filter) (*unstructured.UnstructuredList, error)
+	CrdSparkApplicationSubmit(namespace string, yaml map[string]any) (any, error)
+	CrdSparkApplicationDelete(namespace, name string) error
 }
 
 type K8SContract interface {
 	GetK8SCluster() ([]string, error) // 获取当前程序注册支持的所有k8s集群
 
+	// Flink
 	CrdFlinkDeploymentList(k8sClusterName string, filter Filter) (CrdFlinkDeploymentGetResponse, error)
 	CrdFlinkDeploymentApply(CreateFlinkClusterRequest) (CreateFlinkClusterResponse, error)
 	CrdFlinkDeploymentDelete(DeleteFlinkClusterRequest) error
 	CrdFlinkSessionJobList(k8sClusterName string, filter Filter) (CrdFlinkSessionJobGetResponse, error)
 	CrdFlinkSessionJobSubmit(CreateFlinkSessionJobRequest) (any, error)
 	CrdFlinkSessionJobDelete(DeleteFlinkSessionJobRequest) error
+
+	// Spark
+	// CrdSparkApplicationList(k8sClusterName string, filter Filter) (CrdSparkApplicationGetResponse, error)
+	// CrdSparkApplicationSubmit(CreateSparkApplicationRequest) (CreateSparkApplicationResponse, error)
+	// CrdSparkApplicationDelete(DeleteSparkApplicationRequest) error
 }
 
 type K8SConfig struct {
