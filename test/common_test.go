@@ -70,12 +70,11 @@ func generateRandomString(length int) string {
 func TestCrdFlinkDeploymentApply(t *testing.T) {
 	s3Path := fmt.Sprintf("%s/%s/%s/flink-data/", os.Getenv("S3_BUCKET"), "test", time.Now().Format("20060102150405"))
 	req := model.CreateFlinkClusterRequest{
-		K8SClusterName: tea.String("dev"),
-		ClusterName:    tea.String("flink-application-13-" + generateRandomString(6)),
-		Image:          tea.String("flink:1.13"),
-		Version:        tea.String("v1_13"),
-		Submitter:      tea.String("xops"),
-		NameSpace:      tea.String("flink"),
+		ClusterName: tea.String("flink-application-13-" + generateRandomString(6)),
+		Image:       tea.String("flink:1.13"),
+		Version:     tea.String("v1_13"),
+		Submitter:   tea.String("xops"),
+		NameSpace:   tea.String("flink"),
 		Env: []model.Env{
 			{
 				Name:  tea.String("ENABLE_BUILT_IN_PLUGINS"),
@@ -107,7 +106,7 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
 		},
 	}
-	resp, err := k8s.CrdFlinkDeploymentApply(req)
+	resp, err := k8s.CrdFlinkDeploymentApply("dev", req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,10 +117,9 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 func TestCrdFlinkDeploymentDelete(t *testing.T) {
 
 	req := model.DeleteFlinkClusterRequest{
-		K8SClusterName: tea.String("test"),
-		ClusterName:    tea.String("flink-application-13-csdtr8"),
+		ClusterName: tea.String("flink-application-13-csdtr8"),
 	}
-	err := k8s.CrdFlinkDeploymentDelete(req)
+	err := k8s.CrdFlinkDeploymentDelete("dev", req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,11 +129,10 @@ func TestCrdFlinkDeploymentDelete(t *testing.T) {
 func createSessionFlinkCluster() error {
 	// Create session cluster first
 	req := model.CreateFlinkClusterRequest{
-		K8SClusterName: tea.String("test"),
-		ClusterName:    tea.String("flink-session"),
-		Image:          tea.String("flink:1.17"),
+		ClusterName: tea.String("flink-session"),
+		Image:       tea.String("flink:1.17"),
 	}
-	resp, err := k8s.CrdFlinkDeploymentApply(req)
+	resp, err := k8s.CrdFlinkDeploymentApply("test", req)
 	if err != nil {
 		return err
 	}
@@ -161,10 +158,9 @@ func TestCrdFlinkSessionJobSubmit(t *testing.T) {
 	// createSessionFlinkCluster()
 	// Submit session job
 	sessionJobReq := model.CreateFlinkSessionJobRequest{
-		K8SClusterName: tea.String("test"),
-		NameSpace:      tea.String("default"),
-		SubmitJobName:  tea.String("flink-session-job-13"),
-		ClusterName:    tea.String("flink-session-13"),
+		NameSpace:     tea.String("default"),
+		SubmitJobName: tea.String("flink-session-job-13"),
+		ClusterName:   tea.String("flink-session-13"),
 		Job: &model.Job{
 			JarURI:      tea.String("https://repo1.maven.org/maven2/org/apache/flink/flink-examples-streaming_2.12/1.13.6/flink-examples-streaming_2.12-1.13.6-TopSpeedWindowing.jar"),
 			Parallelism: tea.Int32(2),
@@ -172,7 +168,7 @@ func TestCrdFlinkSessionJobSubmit(t *testing.T) {
 		},
 		Submitter: tea.String("xops"),
 	}
-	sessionJobResp, sessionJobErr := k8s.CrdFlinkSessionJobSubmit(sessionJobReq)
+	sessionJobResp, sessionJobErr := k8s.CrdFlinkSessionJobSubmit("test", sessionJobReq)
 	if sessionJobErr != nil {
 		t.Fatal(sessionJobErr)
 	}
@@ -183,13 +179,33 @@ func TestCrdFlinkSessionJobSubmit(t *testing.T) {
 func TestCrdFlinkSessionJobDelete(t *testing.T) {
 
 	req := model.DeleteFlinkSessionJobRequest{
-		K8SClusterName: tea.String("test"),
-		ClusterName:    tea.String("flink-session"),
-		JobName:        tea.String("flink-session-job-4"),
+		ClusterName: tea.String("flink-session"),
+		JobName:     tea.String("flink-session-job-4"),
 	}
-	err := k8s.CrdFlinkSessionJobDelete(req)
+	err := k8s.CrdFlinkSessionJobDelete("test", req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("success")
+}
+
+// CrdSparkApplicationList
+func TestCrdSparkApplicationList(t *testing.T) {
+	resp, err := k8s.CrdSparkApplicationList("test", model.Filter{
+		// NameSpace: tea.String("default"),
+		// FieldSelector: tea.String("metadata.name=spark-pi-example"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("List SparkApplication success", tea.Prettify(resp))
+}
+
+// CrdSparkApplicationGet
+func TestCrdSparkApplicationGet(t *testing.T) {
+	resp, err := k8s.CrdSparkApplicationGet("test", "default", "spark-pi-example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Get SparkApplication success", tea.Prettify(resp.Spec))
 }

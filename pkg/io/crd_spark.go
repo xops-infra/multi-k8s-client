@@ -2,6 +2,7 @@ package io
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
 	apiv1 "k8s.io/api/core/v1"
@@ -24,17 +25,20 @@ func (c *k8sClient) CrdSparkApplicationList(filter model.Filter) (*unstructured.
 	return result, nil
 }
 
-func (c *k8sClient) CrdSparkApplicationSubmit(namespace string, yaml map[string]any) (any, error) {
+func (c *k8sClient) CrdSparkApplicationApply(yaml map[string]any) (any, error) {
+	if yaml["metadata"].(map[string]any)["name"] == nil {
+		return nil, fmt.Errorf("name is required")
+	}
 	sparkApplicationRes := GetGVR("sparkoperator.k8s.io", "v1beta2", "sparkapplications")
 
 	sparkApplication := &unstructured.Unstructured{
 		Object: yaml,
 	}
-	if namespace == "" {
-		namespace = apiv1.NamespaceDefault
+	namsepace := "default"
+	if yaml["metadata"].(map[string]any)["namespace"] != nil {
+		namsepace = yaml["metadata"].(map[string]any)["namespace"].(string)
 	}
-	sparkApplication.SetNamespace(namespace)
-	result, err := c.dynamic.Resource(sparkApplicationRes).Namespace(namespace).Create(context.TODO(), sparkApplication, metav1.CreateOptions{})
+	result, err := c.dynamic.Resource(sparkApplicationRes).Namespace(namsepace).Create(context.TODO(), sparkApplication, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -38,7 +38,6 @@ type CrdFlinkDeployment struct {
 }
 
 type CreateFlinkClusterRequest struct {
-	K8SClusterName     *string        `json:"k8s_cluster_name" binding:"required"` // 初始化的k8s集群名称
 	NameSpace          *string        `json:"namespace" default:"default"`
 	ClusterName        *string        `json:"cluster_name" binding:"required"` // metadata.name
 	Image              *string        `json:"image" default:"flink:1.17"`
@@ -334,18 +333,12 @@ type Job struct {
 	Args        []string `json:"args"`         // 启动参数
 }
 
-type CreateFlinkClusterResponse struct {
-	Result any    `json:"result"`
-	Info   string `json:"info"`
-}
-
 type CreateFlinkSessionJobRequest struct {
-	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"` // k8s集群名称
-	NameSpace      *string `json:"namespace"`                           // 默认是default
-	SubmitJobName  *string `json:"submit_job_name" binding:"required"`  // 提交job名称,实际集群会自动产生一个 job_name ，防止冲突这里叫submit_job_name
-	ClusterName    *string `json:"cluster_name" binding:"required"`     // session集群名称 spec.deploymentName
-	Job            *Job    `json:"job" binding:"required"`
-	Submitter      *string `json:"submitter"` // 提交人
+	NameSpace     *string `json:"namespace"`                          // 默认是default
+	SubmitJobName *string `json:"submit_job_name" binding:"required"` // 提交job名称,实际集群会自动产生一个 job_name ，防止冲突这里叫submit_job_name
+	ClusterName   *string `json:"cluster_name" binding:"required"`    // session集群名称 spec.deploymentName
+	Job           *Job    `json:"job" binding:"required"`
+	Submitter     *string `json:"submitter"` // 提交人
 }
 
 /*
@@ -408,14 +401,12 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 }
 
 type DeleteFlinkClusterRequest struct {
-	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"` // k8s集群名称
-	NameSpace      *string `json:"namespace" default:"default"`
-	ClusterName    *string `json:"cluster_name" binding:"required"`
+	NameSpace   *string `json:"namespace" default:"default"`
+	ClusterName *string `json:"cluster_name" binding:"required"`
 }
 
 type DeleteFlinkSessionJobRequest struct {
-	K8SClusterName *string `json:"k8s_cluster_name" binding:"required"` // k8s集群名称
-	ClusterName    *string `json:"cluster_name" binding:"required"`     // flink集群名称
-	NameSpace      *string `json:"namespace" default:"default"`
-	JobName        *string `json:"job_name" binding:"required"`
+	ClusterName *string `json:"cluster_name" binding:"required"` // flink集群名称
+	NameSpace   *string `json:"namespace" default:"default"`
+	JobName     *string `json:"job_name" binding:"required"`
 }

@@ -36,13 +36,14 @@ type K8SIO interface {
 	CrdFlinkDeploymentList(Filter) (*unstructured.UnstructuredList, error)
 	CrdFlinkDeploymentApply(namespace string, yaml map[string]any) (any, error)
 	CrdFlinkDeploymentDelete(namespace, name string) error
+
 	CrdFlinkSessionJobList(Filter) (*unstructured.UnstructuredList, error)
 	CrdFlinkSessionJobSubmit(namespace string, yaml map[string]any) (any, error) // for flink session cluster, can't be used for application cluster
 	CrdFlinkSessionJobDelete(namespace, name string) error
 
 	// CRD Spark
 	CrdSparkApplicationList(Filter) (*unstructured.UnstructuredList, error)
-	CrdSparkApplicationSubmit(namespace string, yaml map[string]any) (any, error)
+	CrdSparkApplicationApply(yaml map[string]any) (any, error)
 	CrdSparkApplicationDelete(namespace, name string) error
 }
 
@@ -51,16 +52,17 @@ type K8SContract interface {
 
 	// Flink
 	CrdFlinkDeploymentList(k8sClusterName string, filter Filter) (CrdFlinkDeploymentGetResponse, error)
-	CrdFlinkDeploymentApply(CreateFlinkClusterRequest) (CreateFlinkClusterResponse, error)
-	CrdFlinkDeploymentDelete(DeleteFlinkClusterRequest) error
+	CrdFlinkDeploymentApply(k8sClusterName string, req CreateFlinkClusterRequest) (CreateResponse, error)
+	CrdFlinkDeploymentDelete(k8sClusterName string, req DeleteFlinkClusterRequest) error
 	CrdFlinkSessionJobList(k8sClusterName string, filter Filter) (CrdFlinkSessionJobGetResponse, error)
-	CrdFlinkSessionJobSubmit(CreateFlinkSessionJobRequest) (any, error)
-	CrdFlinkSessionJobDelete(DeleteFlinkSessionJobRequest) error
+	CrdFlinkSessionJobSubmit(k8sClusterName string, req CreateFlinkSessionJobRequest) (any, error)
+	CrdFlinkSessionJobDelete(k8sClusterName string, req DeleteFlinkSessionJobRequest) error
 
 	// Spark
-	// CrdSparkApplicationList(k8sClusterName string, filter Filter) (CrdSparkApplicationGetResponse, error)
-	// CrdSparkApplicationSubmit(CreateSparkApplicationRequest) (CreateSparkApplicationResponse, error)
-	// CrdSparkApplicationDelete(DeleteSparkApplicationRequest) error
+	CrdSparkApplicationList(k8sClusterName string, filter Filter) (CrdSparkApplicationGetResponse, error)
+	CrdSparkApplicationGet(k8sClusterName, namespace, name string) (CrdResourceDetail, error)
+	CrdSparkApplicationApply(k8sClusterName string, req CreateSparkApplicationRequest) (CreateResponse, error)
+	CrdSparkApplicationDelete(k8sClusterName string, req DeleteSparkApplicationRequest) error
 }
 
 type K8SConfig struct {
@@ -70,4 +72,18 @@ type K8SConfig struct {
 type Cluster struct {
 	KubeConfig *string `json:"kube_config"` // base64
 	KubePath   *string `json:"kube_path"`   // path
+}
+
+type CreateResponse struct {
+	Result any    `json:"result"`
+	Info   string `json:"info"`
+}
+
+type CrdResourceDetail struct {
+	ApiVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Metadata   any    `json:"metadata"`
+	Spec       any    `json:"spec"`
+	Status     any    `json:"status"`
 }
