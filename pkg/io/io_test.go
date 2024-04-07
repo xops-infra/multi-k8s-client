@@ -67,6 +67,18 @@ func TestK8SRbac(t *testing.T) {
 	}
 }
 
+// CrdFlinkDeploymentList
+func TestCrdFlinkDeploymentList(t *testing.T) {
+	resp, err := client.CrdFlinkDeploymentList(model.Filter{
+		NameSpace: tea.String("flink"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("List FlinkDeployment success", tea.Prettify(resp.Items))
+
+}
+
 // FlinkApplication Create
 func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 	req := model.CreateFlinkClusterRequest{
@@ -139,4 +151,37 @@ func TestCrdFlinkDeploymentDelete(t *testing.T) {
 		}
 		t.Logf("CrdFlinkDeploymentDelete %s success", i)
 	}
+}
+
+// CrdSparkApplicationList
+func TestCrdSparkApplicationList(t *testing.T) {
+	resp, err := client.CrdSparkApplicationList(model.Filter{
+		// NameSpace: tea.String("default"),
+		// FieldSelector: tea.String("metadata.name=spark-pi-example"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("List SparkApplication success", tea.Prettify(resp))
+}
+
+// CrdSparkApplicationApply
+func TestCrdSparkApplicationApply(t *testing.T) {
+	req := model.CreateSparkApplicationRequest{
+		Name: tea.String("spark-pi-example"),
+	}
+	resp, err := client.CrdSparkApplicationApply(req.ToYaml())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Start SparkApplication success", resp)
+}
+
+// CrdSparkApplicationDelete
+func TestCrdSparkApplicationDelete(t *testing.T) {
+	err := client.CrdSparkApplicationDelete("default", "spark-pi-example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Delete SparkApplication success")
 }

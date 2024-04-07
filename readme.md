@@ -8,6 +8,8 @@ go get -u github.com/xops-infra/multi-k8s-client@main
 ```
 
 ### 更新日志
+- 2024-04
+    - feat: support sparkOnK8S;
 - 2024-02
     - feat: init k8s from kubePath&kubeConfig;
     - feat: support flink crd list with filter;
