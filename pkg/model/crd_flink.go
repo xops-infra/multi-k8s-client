@@ -330,7 +330,8 @@ type Job struct {
 	JarURI      *string  `json:"jar_url"` // jar包路径，application模式必须是local方式将包打包到镜像配合image去做;session模式必须是http方式
 	Parallelism *int32   `json:"parallelism"`
 	UpgradeMode *string  `json:"upgrade_mode"` // stateless or stateful
-	Args        []string `json:"args"`         // 启动参数
+	Args        []string `json:"args"`         // 启动参数 --arg1=value1
+	EntryClass  *string  `json:"entry_class"`  // 主类
 }
 
 type CreateFlinkSessionJobRequest struct {
@@ -394,6 +395,9 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 		}
 		if req.Job.Args != nil {
 			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["args"] = req.Job.Args
+		}
+		if req.Job.EntryClass != nil {
+			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["entryClass"] = *req.Job.EntryClass
 		}
 	}
 	// fmt.Println(tea.Prettify(yaml))
