@@ -38,18 +38,19 @@ type CrdFlinkDeployment struct {
 }
 
 type CreateFlinkClusterRequest struct {
-	NameSpace          *string        `json:"namespace" default:"default"`
-	ClusterName        *string        `json:"cluster_name" binding:"required"` // metadata.name
-	Image              *string        `json:"image" default:"flink:1.17"`
-	Version            *string        `json:"version" default:"v1_17"`
-	ServiceAccount     *string        `json:"service_account" default:"flink"`
-	FlinkConfiguration map[string]any `json:"flink_configuration"`              // flink配置,键值对的方式比如: {"taskmanager.numberOfTaskSlots": "2"}
-	EnableFluentit     *bool          `json:"enable_fluentbit" default:"false"` // sidecar fluentbit
-	Env                []Env          `json:"env"`                              // 环境变量,同时给JM和TM设置环境变量
-	TaskManager        *TaskManager   `json:"task_manager"`
-	JobManager         *JobManager    `json:"job_manager"`
-	Job                *Job           `json:"job"`       // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
-	Submitter          *string        `json:"submitter"` // 提交人
+	NameSpace          *string           `json:"namespace" default:"default"`
+	ClusterName        *string           `json:"cluster_name" binding:"required"` // metadata.name
+	Image              *string           `json:"image" default:"flink:1.17"`
+	Version            *string           `json:"version" default:"v1_17"`
+	ServiceAccount     *string           `json:"service_account" default:"flink"`
+	FlinkConfiguration map[string]any    `json:"flink_configuration"`              // flink配置,键值对的方式比如: {"taskmanager.numberOfTaskSlots": "2"}
+	EnableFluentit     *bool             `json:"enable_fluentbit" default:"false"` // sidecar fluentbit
+	Env                []Env             `json:"env"`                              // 环境变量,同时给JM和TM设置环境变量
+	TaskManager        *TaskManager      `json:"task_manager"`
+	JobManager         *JobManager       `json:"job_manager"`
+	Job                *Job              `json:"job"`       // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
+	Submitter          *string           `json:"submitter"` // 提交人
+	Labels             map[string]string `json:"labels"`    // 自定义标签
 }
 
 type Env struct {
@@ -286,27 +287,20 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 		}
 	}
 	if req.Job != nil {
-		yaml["spec"].(map[string]interface{})["job"] = map[string]interface{}{
-			"jarURI":      "local:///opt/flink/examples/streaming/StateMachineExample.jar",
-			"parallelism": 2,
-			"upgradeMode": "stateless",
-		}
-		if req.Job.UpgradeMode == nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["upgradeMode"] = "stateless"
-		}
-		if req.Job.JarURI != nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["jarURI"] = *req.Job.JarURI
-		}
-		if req.Job.Parallelism != nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["parallelism"] = *req.Job.Parallelism
-		}
-		if req.Job.Args != nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["args"] = req.Job.Args
-		}
+		yaml["spec"].(map[string]interface{})["job"] = req.Job.ToYaml()
 	}
 	if req.ServiceAccount != nil {
 		yaml["spec"].(map[string]interface{})["serviceAccount"] = *req.ServiceAccount
 	}
+	if req.Submitter != nil {
+		yaml["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{
+			"CreatedBy": *req.Submitter,
+		}
+	}
+	if req.Labels != nil {
+		yaml["metadata"].(map[string]interface{})["labels"] = req.Labels
+	}
+
 	return yaml
 }
 
@@ -332,6 +326,29 @@ type Job struct {
 	UpgradeMode *string  `json:"upgrade_mode"` // stateless or stateful
 	Args        []string `json:"args"`         // 启动参数 --arg1=value1
 	EntryClass  *string  `json:"entry_class"`  // 主类
+}
+
+func (j *Job) ToYaml() map[string]any {
+	yaml := map[string]any{
+		"parallelism": 2,
+		"upgradeMode": "stateless",
+	}
+	if j.UpgradeMode != nil {
+		yaml["upgradeMode"] = *j.UpgradeMode
+	}
+	if j.JarURI != nil {
+		yaml["jarURI"] = *j.JarURI
+	}
+	if j.Parallelism != nil {
+		yaml["parallelism"] = *j.Parallelism
+	}
+	if j.Args != nil {
+		yaml["args"] = j.Args
+	}
+	if j.EntryClass != nil {
+		yaml["entryClass"] = *j.EntryClass
+	}
+	return yaml
 }
 
 type CreateFlinkSessionJobRequest struct {
@@ -380,25 +397,7 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 		}
 	}
 	if req.Job != nil {
-		yaml["spec"].(map[string]interface{})["job"] = map[string]interface{}{
-			"parallelism": 4,
-			"upgradeMode": "stateless",
-		}
-		if req.Job.UpgradeMode != nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["upgradeMode"] = *req.Job.UpgradeMode
-		}
-		if req.Job.JarURI != nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["jarURI"] = *req.Job.JarURI
-		}
-		if req.Job.Parallelism != nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["parallelism"] = *req.Job.Parallelism
-		}
-		if req.Job.Args != nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["args"] = req.Job.Args
-		}
-		if req.Job.EntryClass != nil {
-			yaml["spec"].(map[string]interface{})["job"].(map[string]interface{})["entryClass"] = *req.Job.EntryClass
-		}
+		yaml["spec"].(map[string]interface{})["job"] = req.Job.ToYaml()
 	}
 	// fmt.Println(tea.Prettify(yaml))
 	return yaml
