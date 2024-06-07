@@ -1,10 +1,13 @@
 package model
 
 import (
+	appv1 "k8s.io/api/apps/v1"
 	podV1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	rbacV1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	appsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 )
 
 type Filter struct {
@@ -28,6 +31,26 @@ type K8SIO interface {
 	// POD
 	PodList(namespace string) (*podV1.PodList, error)
 	PodGet(namespace, name string) (*podV1.Pod, error)
+
+	// DEPLOYMENT
+	DeploymentList(filter Filter) (*appv1.DeploymentList, error)
+	DeploymentApply(namespace string, yaml *appsv1.DeploymentApplyConfiguration) (any, error)
+	DeploymentDelete(namespace, name string) error
+
+	// SERVICE
+	// ServiceList(namespace string) (*unstructured.UnstructuredList, error)
+	// ServiceApply(namespace string, yaml map[string]any) (any, error)
+	// ServiceDelete(namespace, name string) error
+
+	// CONFIGMAP
+	// ConfigMapList(namespace string) (*unstructured.UnstructuredList, error)
+	// ConfigMapApply(namespace string, yaml map[string]any) (any, error)
+	// ConfigMapDelete(namespace, name string) error
+
+	// PVC
+	PvcList(filter Filter) (*v1.PersistentVolumeClaimList, error)
+	PvcApply(req ApplyPvcRequest) (any, error)
+	PvcDelete(namespace, name string) error
 
 	// RBAC
 	RbacList(namespace string) (*rbacV1.RoleList, error)
@@ -57,6 +80,10 @@ type K8SContract interface {
 	CrdFlinkSessionJobList(k8sClusterName string, filter Filter) (CrdFlinkSessionJobGetResponse, error)
 	CrdFlinkSessionJobSubmit(k8sClusterName string, req CreateFlinkSessionJobRequest) (any, error)
 	CrdFlinkSessionJobDelete(k8sClusterName string, req DeleteFlinkSessionJobRequest) error
+	// FlinkV1.12.7
+	FlinkV12ClusterList(k8sClusterName string, filter Filter) (CrdFlinkDeploymentGetResponse, error)
+	FlinkV12ClustertApply(k8sClusterName string, req CreateFlinkV12ClusterRequest) (CreateResponse, error)
+	FlinkV12ClusterDelete(k8sClusterName string, req DeleteFlinkClusterRequest) error
 
 	// Spark
 	CrdSparkApplicationList(k8sClusterName string, filter Filter) (CrdSparkApplicationGetResponse, error)

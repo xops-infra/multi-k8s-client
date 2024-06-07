@@ -185,3 +185,42 @@ func TestCrdSparkApplicationDelete(t *testing.T) {
 	}
 	t.Log("Delete SparkApplication success")
 }
+
+// PvcList
+func TestPvcList(t *testing.T) {
+	resp, err := client.PvcList(model.Filter{
+		NameSpace: tea.String("default"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, i := range resp.Items {
+		i.ManagedFields = nil
+		t.Log(tea.Prettify(i))
+	}
+	t.Logf("List Pvc success %d", len(resp.Items))
+}
+
+// PvcApply
+func TestPvcApply(t *testing.T) {
+	req := model.ApplyPvcRequest{
+		Name:        tea.String("demo-pvc"),
+		Owner:       tea.String("demo-owner"),
+		StorageSize: tea.Int(10),
+	}
+
+	resp, err := client.PvcApply(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("PvcApply success", resp)
+}
+
+// PvcDelete
+func TestPvcDelete(t *testing.T) {
+	err := client.PvcDelete("default", "demo-pvc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("PvcDelete success")
+}
