@@ -48,7 +48,7 @@ func (s *K8SService) FlinkV12ClustertApply(k8sClusterName string, req model.Crea
 		_, err := io.PvcApply(model.ApplyPvcRequest{
 			Name:        req.Name,
 			Namespace:   tea.String(namespace),
-			Owner:       req.Owner,
+			Label:       map[string]string{"owner": *req.Owner},
 			StorageSize: req.JobManager.PvcSize,
 		})
 		if err != nil {

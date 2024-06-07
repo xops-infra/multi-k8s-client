@@ -1,6 +1,7 @@
 package io_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/alibabacloud-go/tea/tea"
@@ -205,7 +206,7 @@ func TestPvcList(t *testing.T) {
 func TestPvcApply(t *testing.T) {
 	req := model.ApplyPvcRequest{
 		Name:        tea.String("demo-pvc"),
-		Owner:       tea.String("demo-owner"),
+		Label:       map[string]string{"app": "demo-pvc"},
 		StorageSize: tea.Int(10),
 	}
 
@@ -223,4 +224,51 @@ func TestPvcDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("PvcDelete success")
+}
+
+// ServiceList
+func TestServiceList(t *testing.T) {
+	resp, err := client.ServiceList(model.Filter{
+		NameSpace: tea.String("default"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, i := range resp.Items {
+		i.ManagedFields = nil
+		t.Log(tea.Prettify(i))
+	}
+	t.Logf("List Service success %d", len(resp.Items))
+}
+
+// ServiceApply
+func TestServiceApply(t *testing.T) {
+	req := model.ApplyServiceRequest{
+		Name:      tea.String("demo-service"),
+		Namespace: tea.String("default"),
+		Label:     map[string]string{"app": "demo-service", "owner": "demo"},
+		Spec: &model.ServiceSpec{
+			Type:     tea.String("ClusterIP"),
+			Selector: map[string]string{"app": "demo-service"},
+			Ports: []model.Port{{Name: tea.String("http"),
+				Port: tea.Int32(80), TargetPort: tea.Int32(8080),
+				Protocol: tea.String("TCP")}},
+		},
+		Annotations: map[string]string{"owner": "demo"},
+	}
+	fmt.Println(tea.Prettify(req))
+	resp, err := client.ServiceApply(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("ServiceApply success", resp)
+}
+
+// ServiceDelete
+func TestServiceDelete(t *testing.T) {
+	err := client.ServiceDelete("default", "demo-service")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("ServiceDelete success")
 }

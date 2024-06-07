@@ -3,7 +3,6 @@ package model
 import (
 	"fmt"
 
-	"github.com/alibabacloud-go/tea/tea"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,11 +10,11 @@ import (
 )
 
 type ApplyPvcRequest struct {
-	Name             *string `json:"name" binding:"required"`
-	Namespace        *string `json:"namespace"`
-	Owner            *string `json:"owner"`
-	StorageClassName *string `json:"storageClassName"`
-	StorageSize      *int    `json:"storageSize" default:"10"` // 10G
+	Name             *string           `json:"name" binding:"required"`
+	Namespace        *string           `json:"namespace"`
+	Label            map[string]string `json:"label"`
+	StorageClassName *string           `json:"storageClassName"`
+	StorageSize      *int              `json:"storageSize" default:"10"` // 10G
 }
 
 func (a ApplyPvcRequest) ToOptions() metav1.ApplyOptions {
@@ -26,13 +25,13 @@ func (a ApplyPvcRequest) NewPVC() (*corev1.PersistentVolumeClaimApplyConfigurati
 	if a.Name == nil {
 		return nil, fmt.Errorf("name is required")
 	}
-	namespace := "flink"
+	namespace := v1.NamespaceDefault
 	if a.Namespace != nil {
 		namespace = *a.Namespace
 	}
 	config := corev1.PersistentVolumeClaim(*a.Name, namespace)
-	if a.Owner != nil {
-		config.Labels = map[string]string{"owner": *a.Owner}
+	if a.Label != nil {
+		config.Labels = a.Label
 	}
 	spec := &corev1.PersistentVolumeClaimSpecApplyConfiguration{}
 	spec.StorageClassName = a.StorageClassName
@@ -49,6 +48,5 @@ func (a ApplyPvcRequest) NewPVC() (*corev1.PersistentVolumeClaimApplyConfigurati
 	spec.AccessModes = []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce}
 
 	config.Spec = spec
-	fmt.Println(tea.Prettify(config))
 	return config, nil
 }

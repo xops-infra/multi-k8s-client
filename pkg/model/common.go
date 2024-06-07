@@ -38,9 +38,9 @@ type K8SIO interface {
 	DeploymentDelete(namespace, name string) error
 
 	// SERVICE
-	// ServiceList(namespace string) (*unstructured.UnstructuredList, error)
-	// ServiceApply(namespace string, yaml map[string]any) (any, error)
-	// ServiceDelete(namespace, name string) error
+	ServiceList(filter Filter) (*v1.ServiceList, error)
+	ServiceApply(req ApplyServiceRequest) (any, error)
+	ServiceDelete(namespace, name string) error
 
 	// CONFIGMAP
 	// ConfigMapList(namespace string) (*unstructured.UnstructuredList, error)
