@@ -272,3 +272,46 @@ func TestServiceDelete(t *testing.T) {
 	}
 	t.Log("ServiceDelete success")
 }
+
+// ConfigMapList
+func TestConfigmapList(t *testing.T) {
+	resp, err := client.ConfigMapList(model.Filter{
+		NameSpace: tea.String("default"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, i := range resp.Items {
+		i.ManagedFields = nil
+		t.Log(tea.Prettify(i))
+	}
+	t.Logf("List Configmap success %d", len(resp.Items))
+}
+
+// ConfigMapApply
+func TestConfigmapApply(t *testing.T) {
+	req := model.ApplyConfigMapRequest{
+		Namespace: tea.String("default"),
+		Name:      tea.String("demo-configmap"),
+		Labels:    map[string]string{"app": "demo-configmap", "owner": "demo"},
+		Data: map[string]string{"abc.config": `asdasd
+		dddd
+		asd
+		xxx
+		`, "xxx.yaml": "value2"},
+	}
+	resp, err := client.ConfigMapApply(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("ConfigmapApply success", resp)
+}
+
+// ConfigMapDelete
+func TestConfigmapDelete(t *testing.T) {
+	err := client.ConfigMapDelete("default", "demo-configmap")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("ConfigmapDelete success")
+}

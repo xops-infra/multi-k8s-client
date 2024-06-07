@@ -43,9 +43,9 @@ type K8SIO interface {
 	ServiceDelete(namespace, name string) error
 
 	// CONFIGMAP
-	// ConfigMapList(namespace string) (*unstructured.UnstructuredList, error)
-	// ConfigMapApply(namespace string, yaml map[string]any) (any, error)
-	// ConfigMapDelete(namespace, name string) error
+	ConfigMapList(filter Filter) (*v1.ConfigMapList, error)
+	ConfigMapApply(req ApplyConfigMapRequest) (any, error)
+	ConfigMapDelete(namespace, name string) error
 
 	// PVC
 	PvcList(filter Filter) (*v1.PersistentVolumeClaimList, error)
