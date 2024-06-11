@@ -9,24 +9,46 @@ import (
 )
 
 // 查询 flinkNamespace 下的所有 deployment
-func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Filter) (model.CrdFlinkDeploymentGetResponse, error) {
+func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.FilterFlinkV12) (any, error) {
 	if io, ok := s.IOs[k8sClusterName]; ok {
-		resp, err := io.DeploymentList(filter)
+		f := model.Filter{
+			NameSpace: tea.String("default"),
+		}
+		if filter.NameSpace != nil {
+			f.NameSpace = filter.NameSpace
+		}
+		if filter.Owner != nil {
+			f.LabelSelector = tea.String(fmt.Sprintf("owner=%s", *filter.Owner))
+		}
+		if filter.Name != nil {
+			f.LabelSelector = tea.String(fmt.Sprintf("app=%s", *filter.Name))
+		}
+		resp, err := io.DeploymentList(f)
 		if err != nil {
 			return model.CrdFlinkDeploymentGetResponse{}, err
 		}
-		var items []model.CrdFlinkDeployment
+		items := make(map[string][]model.CrdFlinkDeployment, 0)
 		for _, item := range resp.Items {
-			// fmt.Println(tea.Prettify(item.Object))
-			items = append(items, model.CrdFlinkDeployment{
-				ClusterName: item.GetName(),
+			var clustername string
+			if strings.HasSuffix(item.GetName(), "-jobmanager") {
+				clustername = strings.TrimSuffix(item.GetName(), "-jobmanager")
+			} else if strings.HasSuffix(item.GetName(), "-taskmanager") {
+				clustername = strings.TrimSuffix(item.GetName(), "-taskmanager")
+			}
+			if clustername == "" {
+				continue
+			}
+			var clusterItem = model.CrdFlinkDeployment{
 				NameSpace:   item.GetNamespace(),
+				ClusterName: item.GetName(),
 				Annotation:  item.GetAnnotations(),
-			})
+				Status:      item.Status,
+			}
+			items[clustername] = append(items[clustername], clusterItem)
 		}
-		return model.CrdFlinkDeploymentGetResponse{
-			Total: len(resp.Items),
-			Items: items,
+		return map[string]any{
+			"total": len(items),
+			"items": items,
 		}, nil
 	}
 	return model.CrdFlinkDeploymentGetResponse{}, fmt.Errorf("cluster not found")

@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/alibabacloud-go/tea/tea"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -162,46 +163,13 @@ var (
 			},
 		},
 	}
-	resourceClusterRole = map[string]any{
-		"apiVersion": "rbac.authorization.k8s.io/v1",
-		"kind":       "ClusterRole",
-		"metadata": map[string]any{
-			"name": "flink-cluster-role",
-		},
-		"rules": []map[string]any{
-			{
-				"apiGroups": []string{
-					"*",
-				},
-				"resources": []string{
-					"configmaps",
-				},
-				"verbs": []string{
-					"*",
-				},
-			},
-		},
-	}
-	resourceClusterRoleBinding = map[string]any{
-		"apiVersion": "rbac.authorization.k8s.io/v1",
-		"kind":       "ClusterRoleBinding",
-		"metadata": map[string]any{
-			"name": "flink-cluster-role-binding",
-		},
-		"roleRef": map[string]any{
-			"apiGroup": "rbac.authorization.k8s.io",
-			"kind":     "ClusterRole",
-			"name":     "flink-cluster-role",
-		},
-		"subjects": []map[string]any{
-			// {
-			// 	"kind":      "User",
-			// 	"name":      "system:anonymous",
-			// 	"namespace": "flink",
-			// },
-		},
-	}
 )
+
+type FilterFlinkV12 struct {
+	NameSpace *string `json:"namespace" default:"default"`
+	Owner     *string `json:"owner"`
+	Name      *string `json:"name"`
+}
 
 type LoadBalancerRequest struct {
 	Annotations map[string]string `json:"annotations"`
@@ -292,9 +260,11 @@ func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
 			Selector: map[string]string{"app": *c.Name, "component": "jobmanager"},
 			Ports: []Port{
 				{
-					Name:     tea.String("webui"),
-					Protocol: tea.String("TCP"),
-					Port:     tea.Int32(int32(randPort)),
+					Name:       tea.String("webui"),
+					Protocol:   tea.String("TCP"),
+					Port:       tea.Int32(int32(randPort)),
+					TargetPort: tea.Int32(8081),
+					NodePort:   tea.Int32(int32(randPort)),
 				},
 			},
 			Type: tea.String("LoadBalancer"),
@@ -333,10 +303,18 @@ func (c *CreateFlinkV12ClusterRequest) NewConfigMap() ApplyConfigMapRequest {
 		}
 	}
 	req.Data = map[string]string{
-		"flink-conf.yaml":     tea.Prettify(defaultConfig),
-		"logback-console.xml": tea.Prettify(LogbackConsole),
+		"flink-conf.yaml":     toString(defaultConfig),
+		"logback-console.xml": LogbackConsole,
 	}
 	return req
+}
+
+func toString(value map[string]any) string {
+	b, err := yaml.Marshal(value)
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }
 
 func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any {

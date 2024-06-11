@@ -32,7 +32,7 @@ type CrdFlinkDeployment struct {
 	NameSpace                  string `json:"namespace"`
 	ClusterInfo                any    `json:"cluster_info"`
 	JobManagerDeploymentStatus any    `json:"job_manager_deployment_status"`
-	JobStatus                  any    `json:"status"`     // 集群状态信息
+	Status                     any    `json:"status"`     // 集群状态信息
 	Annotation                 any    `json:"annotation"` // 集群描述信息
 	Error                      any    `json:"error"`      // 集群错误信息
 }

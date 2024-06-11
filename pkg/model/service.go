@@ -14,6 +14,7 @@ type Port struct {
 	Protocol   *string `json:"protocol" binding:"required"`
 	Port       *int32  `json:"port" binding:"required"`
 	TargetPort *int32  `json:"targetPort"`
+	NodePort   *int32  `json:"nodePort"`
 }
 
 type ServiceSpec struct {
@@ -60,6 +61,9 @@ func (req *ApplyServiceRequest) NewService() (*corev1.ServiceApplyConfiguration,
 				pport.TargetPort = &intstr.IntOrString{
 					IntVal: *port.TargetPort,
 				}
+			}
+			if port.NodePort != nil {
+				pport.NodePort = port.NodePort
 			}
 			yaml.Spec.Ports = append(yaml.Spec.Ports, pport)
 		}

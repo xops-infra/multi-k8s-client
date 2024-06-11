@@ -333,12 +333,12 @@ func TestDeploymentList(t *testing.T) {
 
 // DeploymentCreate
 func TestDeploymentCreate(t *testing.T) {
-	var req = model.CreateFlinkV12ClusterRequest{
-		Name: tea.String("test-cluster"),
-		// NameSpace: tea.String("default"),
-		Owner: tea.String("test-owner"),
-		Image: tea.String("flink:1.12.7"),
-		Env:   map[string]string{"ENABLE_BUILT_IN_PLUGINS": "flink-s3-fs-hadoop-1.12.7.jar;flink-s3-fs-presto-1.12.7.jar"},
+	req := model.CreateFlinkV12ClusterRequest{
+		Name:      tea.String("app-session"),
+		NameSpace: tea.String("flink"),
+		Owner:     tea.String("zhangsan"),
+		Image:     tea.String("flink:1.12.7"),
+		Env:       map[string]string{"ENABLE_BUILT_IN_PLUGINS": "flink-s3-fs-hadoop-1.12.7.jar;flink-s3-fs-presto-1.12.7.jar"},
 		LoadBalancer: &model.LoadBalancerRequest{
 			Annotations: map[string]string{"kubernetes.io/ingress.class": "nginx"},
 			Labels:      map[string]string{"app": "flink"},
@@ -348,7 +348,7 @@ func TestDeploymentCreate(t *testing.T) {
 			Resource: &model.FlinkResource{Memory: tea.String("1024m"), CPU: tea.String("1")},
 		},
 		TaskManager: &model.TaskManagerV12{
-			Nu:       tea.Int(10),
+			Nu:       tea.Int(2),
 			Resource: &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
 		},
 		FlinkConfigRequest: map[string]any{"taskmanager.numberOfTaskSlots": 2},
@@ -374,7 +374,7 @@ func TestDeploymentApply(t *testing.T) {
 
 // DeploymentDelete
 func TestDeploymentDelete(t *testing.T) {
-	err := client.DeploymentDelete("default", "test-cluster-jobmanager")
+	err := client.DeploymentDelete("flink", "app-session-jobmanager")
 	if err != nil {
 		t.Fatal(err)
 	}

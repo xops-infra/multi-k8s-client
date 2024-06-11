@@ -25,6 +25,24 @@ func init() {
 	})
 }
 
+// TEST FlinkV12ClusterList
+func TestFlinkV12ClusterList(t *testing.T) {
+	resp, err := k8s.FlinkV12ClusterList("test", model.FilterFlinkV12{
+		NameSpace: tea.String("flink"),
+		Name:      tea.String("app-session"),
+		// Owner: tea.String("dingyingjie"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for k, v := range resp.(map[string]any)["items"].(map[string][]model.CrdFlinkDeployment) {
+		for _, item := range v {
+			t.Log(k, tea.Prettify(item.Status))
+		}
+	}
+	t.Log(tea.Prettify(resp.(map[string]any)["total"]))
+}
+
 // TEST FlinkV12ClustertApply
 func TestFlinkV12ClustertApply(t *testing.T) {
 	req := model.CreateFlinkV12ClusterRequest{
@@ -34,19 +52,19 @@ func TestFlinkV12ClustertApply(t *testing.T) {
 		Image:     tea.String("flink:1.12.7"),
 		Env:       map[string]string{"ENABLE_BUILT_IN_PLUGINS": "flink-s3-fs-hadoop-1.12.7.jar;flink-s3-fs-presto-1.12.7.jar"},
 		LoadBalancer: &model.LoadBalancerRequest{
-			Annotations: map[string]string{"kubernetes.io/ingress.class": "nginx"},
-			Labels:      map[string]string{"app": "flink"},
+			Annotations: map[string]string{"service.kubernetes.io/loadbalance-id": "lb-xxx"},
+			Labels:      map[string]string{"used-by": "ui"},
 		},
 		JobManager: &model.JobManagerV12{
-			PvcSize: tea.Int(22),
-			// Resource: &model.FlinkResource{Memory: tea.String("1024m"), CPU: tea.String("1")},
+			PvcSize:  tea.Int(22),
+			Resource: &model.FlinkResource{Memory: tea.String("1Gi"), CPU: tea.String("1")},
 		},
 		TaskManager: &model.TaskManagerV12{
-			Nu: tea.Int(2),
-			// Resource: &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
+			Nu:       tea.Int(2),
+			Resource: &model.FlinkResource{Memory: tea.String("2Gi"), CPU: tea.String("1")},
 		},
 		FlinkConfigRequest: map[string]any{"taskmanager.numberOfTaskSlots": 2},
-		NodeSelector:       map[string]any{"kubernetes.io/os": "linux"},
+		NodeSelector:       map[string]any{"env": "flink"},
 	}
 
 	_, err := k8s.FlinkV12ClustertApply("test", req)

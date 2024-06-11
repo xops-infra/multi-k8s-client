@@ -2,7 +2,6 @@ package io
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
@@ -33,7 +32,6 @@ func (io *k8sClient) ServiceApply(req model.ApplyServiceRequest) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(tea.Prettify(service))
 	result, err := io.clientSet.CoreV1().Services(*req.Namespace).Apply(context.TODO(), service, req.ToOptions())
 	if err != nil {
 		return nil, err
