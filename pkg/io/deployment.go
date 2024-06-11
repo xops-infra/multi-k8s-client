@@ -3,11 +3,11 @@ package io
 import (
 	"context"
 
+	"github.com/alibabacloud-go/tea/tea"
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
 	appv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	appsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 )
 
 func (c *k8sClient) DeploymentList(filter model.Filter) (*appv1.DeploymentList, error) {
@@ -24,8 +24,23 @@ func (c *k8sClient) DeploymentList(filter model.Filter) (*appv1.DeploymentList, 
 	return result, nil
 }
 
-func (c *k8sClient) DeploymentApply(namespace string, yaml *appsv1.DeploymentApplyConfiguration) (any, error) {
-	result, err := c.clientSet.AppsV1().Deployments(namespace).Apply(context.TODO(), yaml, metav1.ApplyOptions{Force: true, FieldManager: "multi-k8s-client"})
+func (c *k8sClient) DeploymentApply(req model.ApplyDeploymentRequest) (any, error) {
+	if req.Namespace == nil {
+		req.Namespace = tea.String(corev1.NamespaceDefault)
+	}
+	deployment, err := req.NewApplyDeployment()
+	if err != nil {
+		return nil, err
+	}
+	result, err := c.clientSet.AppsV1().Deployments(*req.Namespace).Apply(context.TODO(), deployment, req.ToApplyOptions())
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *k8sClient) DeploymentCreate(dep *appv1.Deployment) (any, error) {
+	result, err := c.clientSet.AppsV1().Deployments(dep.Namespace).Create(context.TODO(), dep, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -19,11 +19,11 @@ var req = model.CreateFlinkV12ClusterRequest{
 	},
 	JobManager: &model.JobManagerV12{
 		PvcSize:  tea.Int(22),
-		Resource: &model.Resource{Memory: tea.String("1024m"), CPU: tea.Int32(2)},
+		Resource: &model.FlinkResource{Memory: tea.String("1024m"), CPU: tea.String("1")},
 	},
 	TaskManager: &model.TaskManagerV12{
 		Nu:       tea.Int(10),
-		Resource: &model.Resource{Memory: tea.String("2048m"), CPU: tea.Int32(1)},
+		Resource: &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
 	},
 	FlinkConfigRequest: map[string]any{"taskmanager.numberOfTaskSlots": 2},
 	NodeSelector:       map[string]any{"kubernetes.io/os": "linux"},
@@ -57,10 +57,19 @@ func TestNewConfigMap(t *testing.T) {
 func TestNewJobManagerDeployment(t *testing.T) {
 	deployment := req.NewJobManagerDeployment()
 	fmt.Println(tea.Prettify(deployment))
+	createDeploymentRequest, err := model.NewDeploymentCreateFromMap(deployment)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	fmt.Println(tea.Prettify(createDeploymentRequest))
 }
 
 // NewTaskManagerDeployment
 func TestNewTaskManagerDeployment(t *testing.T) {
 	deployment := req.NewTaskManagerDeployment()
-	fmt.Println(tea.Prettify(deployment))
+	createDeploymentRequest, err := model.NewDeploymentCreateFromMap(deployment)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	fmt.Println(tea.Prettify(createDeploymentRequest))
 }

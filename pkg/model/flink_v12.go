@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/alibabacloud-go/tea/tea"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 /*
@@ -181,8 +183,9 @@ var (
 	rerouceJobManagerDeployment map[string]any = map[string]any{
 		"apiVersion": "apps/v1",
 		"kind":       "Deployment",
-		"metadata":   map[string]any{
+		"metadata": map[string]any{
 			// "name":      "jobmanager",
+			"namespace": "default",
 		},
 		"spec": map[string]any{
 			"replicas": 1,
@@ -208,8 +211,9 @@ var (
 	resourceTaskManagerDeployment = map[string]any{
 		"apiVersion": "apps/v1",
 		"kind":       "Deployment",
-		"metadata":   map[string]any{
+		"metadata": map[string]any{
 			// "name":      "taskmanager",
+			"namespace": "default",
 		},
 		"spec": map[string]any{
 			"replicas": 1,
@@ -279,13 +283,13 @@ type LoadBalancerRequest struct {
 }
 
 type JobManagerV12 struct {
-	Resource     *Resource          `json:"resource"`
+	Resource     *FlinkResource     `json:"resource"`
 	NodeSelector *map[string]string `json:"node_selector"`
 	PvcSize      *int               `json:"pvcSize" default:"10"`
 }
 
 type TaskManagerV12 struct {
-	Resource     *Resource          `json:"resource"`
+	Resource     *FlinkResource     `json:"resource"`
 	NodeSelector *map[string]string `json:"node_selector"`
 	Nu           *int               `json:"nu" default:"5"`
 }
@@ -396,13 +400,20 @@ func (c *CreateFlinkV12ClusterRequest) NewConfigMap() map[string]any {
 
 func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any {
 	yaml := rerouceJobManagerDeployment
+	if yaml["metadata"].(map[string]any)["labels"] == nil {
+		yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
+	}
+	yaml["metadata"].(map[string]any)["labels"].(map[string]string)["app"] = *c.Name
+	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(jobManagerDeploymentName, *c.Name)
+
 	if c.Owner != nil {
-		if yaml["metadata"].(map[string]any)["labels"] == nil {
-			yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
-		}
 		yaml["metadata"].(map[string]any)["labels"].(map[string]string)["owner"] = *c.Owner
 	}
-	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(jobManagerDeploymentName, *c.Name)
+
+	if c.NameSpace != nil {
+		yaml["metadata"].(map[string]any)["namespace"] = *c.NameSpace
+	}
+
 	// app
 	yaml["spec"].(map[string]any)["selector"].(map[string]any)["matchLabels"].(map[string]any)["app"] = *c.Name
 	yaml["spec"].(map[string]any)["template"].(map[string]any)["metadata"].(map[string]any)["labels"].(map[string]any)["app"] = *c.Name
@@ -497,16 +508,14 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 	if c.Image != nil {
 		jobContainer["image"] = *c.Image
 	}
+	cpuR := v1.ResourceList{
+		v1.ResourceCPU:    resource.MustParse(*c.JobManager.Resource.CPU),
+		v1.ResourceMemory: resource.MustParse(*c.JobManager.Resource.Memory),
+	}
 	if c.JobManager.Resource != nil {
 		jobContainer["resources"] = map[string]any{
-			"requests": map[string]any{
-				"cpu":    c.JobManager.Resource.CPU,
-				"memory": c.JobManager.Resource.Memory,
-			},
-			"limits": map[string]any{
-				"cpu":    c.JobManager.Resource.CPU,
-				"memory": c.JobManager.Resource.Memory,
-			},
+			"requests": v1.ResourceList(cpuR),
+			"limits":   v1.ResourceList(cpuR),
 		}
 	}
 	if c.Env != nil {
@@ -519,7 +528,7 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 	}
 
 	sideCarContainer := map[string]any{
-		"name":  "sidecar",
+		"name":  "busybox",
 		"image": "busybox",
 		"command": []string{
 			"sh",
@@ -530,20 +539,29 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 	yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"] = []map[string]any{jobContainer, sideCarContainer}
 
 	// nodeSelector 组装
-	yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["nodeSelector"] = c.NodeSelector
+	if c.NodeSelector != nil {
+		yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["nodeSelector"] = c.NodeSelector
+	}
 
 	return yaml
 }
 
 func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any {
 	yaml := resourceTaskManagerDeployment
+
+	if yaml["metadata"].(map[string]any)["labels"] == nil {
+		yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
+	}
+	yaml["metadata"].(map[string]any)["labels"].(map[string]string)["app"] = *c.Name
+	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(taskManagerDeploymentName, *c.Name)
+
 	if c.Owner != nil {
-		if yaml["metadata"].(map[string]any)["labels"] == nil {
-			yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
-		}
 		yaml["metadata"].(map[string]any)["labels"].(map[string]string)["owner"] = *c.Owner
 	}
-	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(taskManagerDeploymentName, *c.Name)
+
+	if c.NameSpace != nil {
+		yaml["metadata"].(map[string]any)["namespace"] = *c.NameSpace
+	}
 	yaml["spec"].(map[string]any)["replicas"] = c.TaskManager.Nu
 	// containers 组装
 	taskManagerContainer := map[string]any{
@@ -607,15 +625,13 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 		}
 	}
 	if c.TaskManager != nil && c.TaskManager.Resource != nil {
+		cpuR := v1.ResourceList{
+			v1.ResourceCPU:    resource.MustParse(*c.TaskManager.Resource.CPU),
+			v1.ResourceMemory: resource.MustParse(*c.TaskManager.Resource.Memory),
+		}
 		taskManagerContainer["resources"] = map[string]any{
-			"requests": map[string]any{
-				"cpu":    c.TaskManager.Resource.CPU,
-				"memory": c.TaskManager.Resource.Memory,
-			},
-			"limits": map[string]any{
-				"cpu":    c.TaskManager.Resource.CPU,
-				"memory": c.TaskManager.Resource.Memory,
-			},
+			"requests": v1.ResourceList(cpuR),
+			"limits":   v1.ResourceList(cpuR),
 		}
 	}
 

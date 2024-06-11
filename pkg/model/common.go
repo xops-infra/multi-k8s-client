@@ -7,7 +7,6 @@ import (
 	rbacV1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	appsv1 "k8s.io/client-go/applyconfigurations/apps/v1"
 )
 
 type Filter struct {
@@ -34,7 +33,8 @@ type K8SIO interface {
 
 	// DEPLOYMENT
 	DeploymentList(filter Filter) (*appv1.DeploymentList, error)
-	DeploymentApply(namespace string, yaml *appsv1.DeploymentApplyConfiguration) (any, error)
+	DeploymentApply(req ApplyDeploymentRequest) (any, error)
+	DeploymentCreate(dep *appv1.Deployment) (any, error)
 	DeploymentDelete(namespace, name string) error
 
 	// SERVICE

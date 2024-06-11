@@ -315,3 +315,68 @@ func TestConfigmapDelete(t *testing.T) {
 	}
 	t.Log("ConfigmapDelete success")
 }
+
+// DeploymentList
+func TestDeploymentList(t *testing.T) {
+	resp, err := client.DeploymentList(model.Filter{
+		NameSpace: tea.String("default"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, i := range resp.Items {
+		i.ManagedFields = nil
+		t.Log(tea.Prettify(i))
+	}
+	t.Logf("List Deployment success %d", len(resp.Items))
+}
+
+// DeploymentCreate
+func TestDeploymentCreate(t *testing.T) {
+	var req = model.CreateFlinkV12ClusterRequest{
+		Name: tea.String("test-cluster"),
+		// NameSpace: tea.String("default"),
+		Owner: tea.String("test-owner"),
+		Image: tea.String("flink:1.12.7"),
+		Env:   map[string]string{"ENABLE_BUILT_IN_PLUGINS": "flink-s3-fs-hadoop-1.12.7.jar;flink-s3-fs-presto-1.12.7.jar"},
+		LoadBalancer: &model.LoadBalancerRequest{
+			Annotations: map[string]string{"kubernetes.io/ingress.class": "nginx"},
+			Labels:      map[string]string{"app": "flink"},
+		},
+		JobManager: &model.JobManagerV12{
+			PvcSize:  tea.Int(22),
+			Resource: &model.FlinkResource{Memory: tea.String("1024m"), CPU: tea.String("1")},
+		},
+		TaskManager: &model.TaskManagerV12{
+			Nu:       tea.Int(10),
+			Resource: &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
+		},
+		FlinkConfigRequest: map[string]any{"taskmanager.numberOfTaskSlots": 2},
+		NodeSelector:       map[string]any{"kubernetes.io/os": "linux"},
+	}
+	dy := req.NewJobManagerDeployment()
+	// fmt.Println(tea.Prettify(dy))
+	createDeploymentRequest, err := model.NewDeploymentCreateFromMap(dy)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	fmt.Println(tea.Prettify(createDeploymentRequest))
+	resp, err := client.DeploymentCreate(createDeploymentRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("DeploymentCreate success", resp)
+}
+
+// DeploymentApply
+func TestDeploymentApply(t *testing.T) {
+}
+
+// DeploymentDelete
+func TestDeploymentDelete(t *testing.T) {
+	err := client.DeploymentDelete("default", "test-cluster-jobmanager")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("DeploymentDelete success")
+}

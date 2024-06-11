@@ -305,18 +305,18 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 }
 
 type TaskManager struct {
-	Resource     *Resource          `json:"resource"`
+	Resource     *FlinkResource     `json:"resource"`
 	NodeSelector *map[string]string `json:"node_selector"`
 }
 
 type JobManager struct {
-	Resource     *Resource          `json:"resource"`
+	Resource     *FlinkResource     `json:"resource"`
 	NodeSelector *map[string]string `json:"node_selector"`
 }
 
-type Resource struct {
+type FlinkResource struct {
 	Memory *string `json:"memory" default:"2048m"`
-	CPU    *int32  `json:"cpu" default:"1"`
+	CPU    *string `json:"cpu" default:"1"`
 }
 
 // yaml 定义的Json 不用_规范
