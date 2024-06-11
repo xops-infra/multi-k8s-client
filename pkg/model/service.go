@@ -10,9 +10,9 @@ import (
 )
 
 type Port struct {
-	Name       *string `json:"name"`
-	Protocol   *string `json:"protocol"`
-	Port       *int32  `json:"port"`
+	Name       *string `json:"name" binding:"required"`
+	Protocol   *string `json:"protocol" binding:"required"`
+	Port       *int32  `json:"port" binding:"required"`
 	TargetPort *int32  `json:"targetPort"`
 }
 
@@ -47,6 +47,9 @@ func (req *ApplyServiceRequest) NewService() (*corev1.ServiceApplyConfiguration,
 	yaml.Spec.WithType(v1.ServiceType(*req.Spec.Type))
 	if req.Spec.Ports != nil {
 		for _, port := range req.Spec.Ports {
+			if port.Name == nil || port.Protocol == nil || port.Port == nil {
+				return nil, fmt.Errorf("need name, protocol and port required")
+			}
 			portal := v1.Protocol(*port.Protocol)
 			pport := corev1.ServicePortApplyConfiguration{
 				Name:     port.Name,

@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/alibabacloud-go/tea/tea"
 	v1 "k8s.io/api/core/v1"
@@ -97,89 +98,14 @@ const (
 )
 
 var (
-	jobManagerServiceName                    = "%s-jobmanager-service"
-	jobManagerDeploymentName                 = "%s-jobmanager"
-	taskManagerDeploymentName                = "%s-taskmanager"
-	configMapV12Name                         = "%s-configmap"
-	pvcName                                  = "%s-pvc"
-	hostLogPath                              = "/mnt/log/%s-flink/"
-	resourceFlinkV12ConfigMap map[string]any = map[string]any{
-		"apiVersion": "v1",
-		"kind":       "ConfigMap",
-		"metadata":   map[string]any{
-			// "name":      "flink-configuration",
-		},
-		"data": map[string]any{
-			"logback.xml": LogbackConsole,
-		},
-	}
-	resourcePVC map[string]any = map[string]any{
-		"apiVersion": "v1",
-		"kind":       "PersistentVolumeClaim",
-		"metadata":   map[string]any{
-			// "name":      "pvc",
-		},
-		"spec": map[string]any{
-			"accessModes": []string{
-				"ReadWriteOnce",
-			},
-			"resources": map[string]any{
-				"requests": map[string]any{
-					"storage": "10Gi", // default 10Gi
-				},
-			},
-		},
-	}
-	rerouceJobManagerService map[string]any = map[string]any{
-		"apiVersion": "v1",
-		"kind":       "Service",
-		"metadata":   map[string]any{
-			// "name":      "jobmanager",
-		},
-		"spec": map[string]any{
-			"ports": []map[string]any{
-				{
-					"port": 6123,
-					"name": "rpc",
-				},
-				{
-					"port": 8081,
-					"name": "webui",
-				},
-				{
-					"port": 6124,
-					"name": "blob-service",
-				},
-			},
-			"selector": map[string]any{
-				"component": "jobmanager",
-				// "app":       "xxx",
-			},
-			"type": "ClusterIP",
-		},
-	}
-	rerouceJobManagerLBService map[string]any = map[string]any{
-		"apiVersion": "v1",
-		"kind":       "Service",
-		"metadata":   map[string]any{
-			// "name":      "jobmanager",
-			// "annotations": map[string]any{},
-		},
-		"spec": map[string]any{
-			"ports": []map[string]any{
-				{
-					// "port": 38081,
-					"targetPort": 8081,
-					"name":       "webui",
-				},
-			},
-			"selector": map[string]any{
-				"component": "jobmanager",
-				// "app":       "xxx",
-			},
-			"type": "LoadBalancer",
-		},
-	}
+	JobManagerServiceName     = "%s-jobmanager-service"
+	JobManagerLBServiceName   = "%s-jobmanager-lb-service"
+	JobManagerDeploymentName  = "%s-jobmanager"
+	TaskManagerDeploymentName = "%s-taskmanager"
+	ConfigMapV12Name          = "%s-configmap"
+	PvcName                   = "%s-pvc"
+
+	hostLogPath                                = "/mnt/log/%s-flink/"
 	rerouceJobManagerDeployment map[string]any = map[string]any{
 		"apiVersion": "apps/v1",
 		"kind":       "Deployment",
@@ -308,70 +234,82 @@ type CreateFlinkV12ClusterRequest struct {
 }
 
 // 主要组装 Name和 Size
-func (c *CreateFlinkV12ClusterRequest) NewPVC() map[string]any {
-	yaml := resourcePVC
-	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(pvcName, *c.Name)
-	if c.JobManager != nil && c.JobManager.PvcSize != nil {
-		yaml["spec"].(map[string]any)["resources"].(map[string]any)["requests"].(map[string]any)["storage"] = fmt.Sprintf("%dGi", *c.JobManager.PvcSize)
+func (c *CreateFlinkV12ClusterRequest) NewPVC() ApplyPvcRequest {
+	req := ApplyPvcRequest{
+		Name:        tea.String(fmt.Sprintf(PvcName, *c.Name)),
+		Namespace:   c.NameSpace,
+		StorageSize: c.JobManager.PvcSize,
 	}
 	if c.Owner != nil {
-		if yaml["metadata"].(map[string]any)["labels"] == nil {
-			yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
-		}
-		yaml["metadata"].(map[string]any)["labels"].(map[string]string)["owner"] = *c.Owner
-
+		req.Label = map[string]string{"owner": *c.Owner, "app": *c.Name}
 	}
-	return yaml
+	return req
 }
 
-func (c *CreateFlinkV12ClusterRequest) NewService() map[string]any {
-	yaml := rerouceJobManagerService
-	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(jobManagerServiceName, *c.Name)
-	yaml["spec"].(map[string]any)["selector"].(map[string]any)["app"] = *c.Name
+func (c *CreateFlinkV12ClusterRequest) NewService() ApplyServiceRequest {
+	req := ApplyServiceRequest{
+		Name:      tea.String(fmt.Sprintf(JobManagerServiceName, *c.Name)),
+		Namespace: c.NameSpace,
+		Spec: &ServiceSpec{
+			Selector: map[string]string{"app": *c.Name, "component": "jobmanager"},
+			Ports: []Port{
+				{
+					Name:     tea.String("rpc"),
+					Protocol: tea.String("TCP"),
+					Port:     tea.Int32(6123),
+				},
+				{
+					Name:     tea.String("webui"),
+					Protocol: tea.String("TCP"),
+					Port:     tea.Int32(8081),
+				}, {
+					Name:     tea.String("blob-service"),
+					Protocol: tea.String("TCP"),
+					Port:     tea.Int32(6124),
+				},
+			},
+			Type: tea.String("ClusterIP"),
+		},
+	}
 
 	if c.Owner != nil {
-		if yaml["metadata"].(map[string]any)["labels"] == nil {
-			yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
-		}
-		yaml["metadata"].(map[string]any)["labels"].(map[string]string)["owner"] = *c.Owner
+		req.Label = map[string]string{"owner": *c.Owner, "app": *c.Name}
 	}
-	return yaml
+	return req
 }
 
 // Port 不指定自动分配
-func (c *CreateFlinkV12ClusterRequest) NewLBService() map[string]any {
-	if c.LoadBalancer == nil {
-		return nil
-	}
+func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
+	// 随机生成30000-32767端口
+	min := 30000
+	max := 32767
+	randPort := rand.Intn(max-min+1) + min
 
-	yaml := rerouceJobManagerLBService
-	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf("%s-lb-service", *c.Name)
-	yaml["spec"].(map[string]any)["selector"].(map[string]any)["app"] = *c.Name
-	if c.LoadBalancer.Annotations != nil {
-		yaml["metadata"].(map[string]any)["annotations"] = c.LoadBalancer.Annotations
+	req := ApplyServiceRequest{
+		Name:      tea.String(fmt.Sprintf(JobManagerLBServiceName, *c.Name)),
+		Namespace: c.NameSpace,
+		Spec: &ServiceSpec{
+			Selector: map[string]string{"app": *c.Name, "component": "jobmanager"},
+			Ports: []Port{
+				{
+					Name:     tea.String("webui"),
+					Protocol: tea.String("TCP"),
+					Port:     tea.Int32(int32(randPort)),
+				},
+			},
+			Type: tea.String("LoadBalancer"),
+		},
 	}
-	if c.LoadBalancer.Labels != nil {
-		yaml["metadata"].(map[string]any)["labels"] = c.LoadBalancer.Labels
-	}
-
-	if c.Owner != nil {
-		if yaml["metadata"].(map[string]any)["labels"] == nil {
-			yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
-		}
-		yaml["metadata"].(map[string]any)["labels"].(map[string]string)["owner"] = *c.Owner
-	}
-
-	return yaml
+	return req
 }
 
-func (c *CreateFlinkV12ClusterRequest) NewConfigMap() map[string]any {
-	yaml := resourceFlinkV12ConfigMap
-	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(configMapV12Name, *c.Name)
+func (c *CreateFlinkV12ClusterRequest) NewConfigMap() ApplyConfigMapRequest {
+	req := ApplyConfigMapRequest{
+		Namespace: c.NameSpace,
+		Name:      tea.String(fmt.Sprintf(ConfigMapV12Name, *c.Name)),
+	}
 	if c.Owner != nil {
-		if yaml["metadata"].(map[string]any)["labels"] == nil {
-			yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
-		}
-		yaml["metadata"].(map[string]any)["labels"].(map[string]string)["owner"] = *c.Owner
+		req.Labels = map[string]string{"owner": *c.Owner, "app": *c.Name}
 	}
 
 	defaultConfig := map[string]any{
@@ -385,7 +323,7 @@ func (c *CreateFlinkV12ClusterRequest) NewConfigMap() map[string]any {
 		"taskmanager.memory.flink.size":        "2048m",
 		"taskmanager.memory.task.heap.size":    "3000m",
 		"web.upload.dir":                       "/opt/flink/target",
-		"jobmanager.rpc.address":               fmt.Sprintf(jobManagerServiceName, *c.Name),
+		"jobmanager.rpc.address":               fmt.Sprintf(JobManagerServiceName, *c.Name),
 		"jobmanager.memory.flink.size":         "2048m",
 		"jobmanager.memory.jvm-metaspace.size": "2048m",
 	}
@@ -394,8 +332,11 @@ func (c *CreateFlinkV12ClusterRequest) NewConfigMap() map[string]any {
 			defaultConfig[k] = v
 		}
 	}
-	yaml["data"].(map[string]any)["flink-conf.yaml"] = tea.Prettify(defaultConfig)
-	return yaml
+	req.Data = map[string]string{
+		"flink-conf.yaml":     tea.Prettify(defaultConfig),
+		"logback-console.xml": tea.Prettify(LogbackConsole),
+	}
+	return req
 }
 
 func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any {
@@ -404,7 +345,7 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 		yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
 	}
 	yaml["metadata"].(map[string]any)["labels"].(map[string]string)["app"] = *c.Name
-	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(jobManagerDeploymentName, *c.Name)
+	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(JobManagerDeploymentName, *c.Name)
 
 	if c.Owner != nil {
 		yaml["metadata"].(map[string]any)["labels"].(map[string]string)["owner"] = *c.Owner
@@ -428,13 +369,13 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 		{
 			"name": "flink-target-pvc",
 			"persistentVolumeClaim": map[string]any{
-				"claimName": fmt.Sprintf(pvcName, *c.Name),
+				"claimName": fmt.Sprintf(PvcName, *c.Name),
 			},
 		},
 		{
 			"name": "flink-config",
 			"configMap": map[string]any{
-				"name": fmt.Sprintf(configMapV12Name, *c.Name),
+				"name": fmt.Sprintf(ConfigMapV12Name, *c.Name),
 				"items": []map[string]any{
 					{
 						"key":  "flink-conf.yaml",
@@ -508,16 +449,17 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 	if c.Image != nil {
 		jobContainer["image"] = *c.Image
 	}
-	cpuR := v1.ResourceList{
-		v1.ResourceCPU:    resource.MustParse(*c.JobManager.Resource.CPU),
-		v1.ResourceMemory: resource.MustParse(*c.JobManager.Resource.Memory),
-	}
-	if c.JobManager.Resource != nil {
+	if c.JobManager != nil && c.JobManager.Resource != nil {
+		cpuR := v1.ResourceList{
+			v1.ResourceCPU:    resource.MustParse(*c.JobManager.Resource.CPU),
+			v1.ResourceMemory: resource.MustParse(*c.JobManager.Resource.Memory),
+		}
 		jobContainer["resources"] = map[string]any{
 			"requests": v1.ResourceList(cpuR),
 			"limits":   v1.ResourceList(cpuR),
 		}
 	}
+
 	if c.Env != nil {
 		for k, v := range c.Env {
 			jobContainer["env"] = append(jobContainer["env"].([]map[string]string), map[string]string{
@@ -553,7 +495,7 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 		yaml["metadata"].(map[string]any)["labels"] = map[string]string{}
 	}
 	yaml["metadata"].(map[string]any)["labels"].(map[string]string)["app"] = *c.Name
-	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(taskManagerDeploymentName, *c.Name)
+	yaml["metadata"].(map[string]any)["name"] = fmt.Sprintf(TaskManagerDeploymentName, *c.Name)
 
 	if c.Owner != nil {
 		yaml["metadata"].(map[string]any)["labels"].(map[string]string)["owner"] = *c.Owner
@@ -578,10 +520,8 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 			},
 		},
 		"livenessProbe": map[string]any{
-			"exec": map[string]any{
-				"tcpSocket": map[string]any{
-					"port": 6122,
-				},
+			"tcpSocket": map[string]any{
+				"port": 6122,
 			},
 			"initialDelaySeconds": 30,
 			"periodSeconds":       60,
@@ -648,7 +588,7 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 		{
 			"name": "flink-config",
 			"configMap": map[string]any{
-				"name": fmt.Sprintf(configMapV12Name, *c.Name),
+				"name": fmt.Sprintf(ConfigMapV12Name, *c.Name),
 				"items": []map[string]any{
 					{
 						"key":  "flink-conf.yaml",

@@ -6,6 +6,7 @@ require (
 	github.com/alibabacloud-go/tea v1.2.2
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/spf13/cast v1.6.0
 	k8s.io/api v0.29.1
 	k8s.io/apiextensions-apiserver v0.29.1
 	k8s.io/apimachinery v0.29.1

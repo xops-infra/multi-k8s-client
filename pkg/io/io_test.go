@@ -354,9 +354,9 @@ func TestDeploymentCreate(t *testing.T) {
 		FlinkConfigRequest: map[string]any{"taskmanager.numberOfTaskSlots": 2},
 		NodeSelector:       map[string]any{"kubernetes.io/os": "linux"},
 	}
-	dy := req.NewJobManagerDeployment()
+	jobDy := req.NewJobManagerDeployment()
 	// fmt.Println(tea.Prettify(dy))
-	createDeploymentRequest, err := model.NewDeploymentCreateFromMap(dy)
+	createDeploymentRequest, err := model.NewDeploymentCreateFromMap(jobDy)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
