@@ -47,7 +47,7 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 			items = append(items, model.CrdFlinkDeployment{
 				ClusterName:                item.GetName(),
 				NameSpace:                  item.GetNamespace(),
-				JobStatus:                  item.Object["status"].(map[string]any)["jobStatus"],
+				Status:                     item.Object["status"].(map[string]any)["jobStatus"],
 				Annotation:                 item.GetAnnotations(),
 				ClusterInfo:                item.Object["status"].(map[string]any)["clusterInfo"],
 				JobManagerDeploymentStatus: item.Object["status"].(map[string]any)["jobManagerDeploymentStatus"],

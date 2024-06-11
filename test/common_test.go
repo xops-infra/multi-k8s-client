@@ -83,11 +83,11 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 		},
 		TaskManager: &model.TaskManager{
 			NodeSelector: &map[string]string{"env": "flink"},
-			Resource:     &model.Resource{Memory: tea.String("1024m"), CPU: tea.Int32(2)},
+			Resource:     &model.FlinkResource{Memory: tea.String("1024m"), CPU: tea.String("2")},
 		},
 		JobManager: &model.JobManager{
 			NodeSelector: &map[string]string{"env": "flink"},
-			Resource:     &model.Resource{Memory: tea.String("2048m"), CPU: tea.Int32(1)},
+			Resource:     &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
 		},
 		FlinkConfiguration: map[string]any{
 			"taskmanager.numberOfTaskSlots":          "2",
