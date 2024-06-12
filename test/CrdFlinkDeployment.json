@@ -1,0 +1,280 @@
+// list FlinkDeployment
+{
+   "apiVersion": "flink.apache.org/v1beta1",
+   "kind": "FlinkDeployment",
+   "metadata": {
+      "annotations": {
+         "CreatedBy": "zhoushoujian"
+      },
+      "creationTimestamp": "2024-02-23T02:35:17Z",
+      "finalizers": [
+         "flinkdeployments.flink.apache.org/finalizer"
+      ],
+      "generation": 2,
+      "managedFields": [
+         {
+            "apiVersion": "flink.apache.org/v1beta1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+               "f:metadata": {
+                  "f:annotations": {
+                     ".": {},
+                     "f:CreatedBy": {}
+                  }
+               },
+               "f:spec": {
+                  ".": {},
+                  "f:flinkConfiguration": {
+                     ".": {},
+                     "f:classloader.resolve-order": {},
+                     "f:fs.s3a.access.key": {},
+                     "f:fs.s3a.endpoint": {},
+                     "f:fs.s3a.secret.key": {},
+                     "f:high-availability": {},
+                     "f:high-availability.storageDir": {},
+                     "f:jobmanager.execution.failover-strategy": {},
+                     "f:state.backend": {},
+                     "f:state.checkpoints.dir": {},
+                     "f:state.savepoints.dir": {},
+                     "f:taskmanager.numberOfTaskSlots": {}
+                  },
+                  "f:flinkVersion": {},
+                  "f:image": {},
+                  "f:jobManager": {
+                     ".": {},
+                     "f:podTemplate": {
+                        ".": {},
+                        "f:apiVersion": {},
+                        "f:kind": {},
+                        "f:metadata": {
+                           ".": {},
+                           "f:name": {}
+                        },
+                        "f:spec": {
+                           ".": {},
+                           "f:nodeSelector": {
+                              ".": {},
+                              "f:env": {}
+                           }
+                        }
+                     },
+                     "f:resource": {
+                        ".": {},
+                        "f:cpu": {},
+                        "f:memory": {}
+                     }
+                  },
+                  "f:podTemplate": {
+                     ".": {},
+                     "f:apiVersion": {},
+                     "f:kind": {},
+                     "f:metadata": {
+                        ".": {},
+                        "f:name": {}
+                     },
+                     "f:spec": {
+                        ".": {},
+                        "f:containers": {},
+                        "f:volumes": {}
+                     }
+                  },
+                  "f:serviceAccount": {},
+                  "f:taskManager": {
+                     ".": {},
+                     "f:podTemplate": {
+                        ".": {},
+                        "f:apiVersion": {},
+                        "f:kind": {},
+                        "f:metadata": {
+                           ".": {},
+                           "f:name": {}
+                        },
+                        "f:spec": {
+                           ".": {},
+                           "f:nodeSelector": {
+                              ".": {},
+                              "f:env": {},
+                              "f:lifecycle": {}
+                           }
+                        }
+                     },
+                     "f:resource": {
+                        ".": {},
+                        "f:cpu": {},
+                        "f:memory": {}
+                     }
+                  }
+               }
+            },
+            "manager": "apiserver",
+            "operation": "Update",
+            "time": "2024-02-23T02:35:17Z"
+         },
+         {
+            "apiVersion": "flink.apache.org/v1beta1",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+               "f:metadata": {
+                  "f:finalizers": {}
+               },
+               "f:spec": {
+                  "f:jobManager": {
+                     "f:podTemplate": {
+                        "f:spec": {
+                           "f:containers": {}
+                        }
+                     },
+                     "f:replicas": {}
+                  },
+                  "f:taskManager": {
+                     "f:podTemplate": {
+                        "f:spec": {
+                           "f:containers": {}
+                        }
+                     }
+                  }
+               },
+               "f:status": {
+                  ".": {},
+                  "f:clusterInfo": {
+                     ".": {},
+                     "f:flink-revision": {},
+                     "f:flink-version": {},
+                     "f:total-cpu": {},
+                     "f:total-memory": {}
+                  },
+                  "f:jobManagerDeploymentStatus": {},
+                  "f:jobStatus": {
+                     ".": {},
+                     "f:savepointInfo": {
+                        ".": {},
+                        "f:lastPeriodicSavepointTimestamp": {},
+                        "f:savepointHistory": {}
+                     }
+                  },
+                  "f:lifecycleState": {},
+                  "f:reconciliationStatus": {
+                     ".": {},
+                     "f:lastReconciledSpec": {},
+                     "f:lastStableSpec": {},
+                     "f:reconciliationTimestamp": {},
+                     "f:state": {}
+                  }
+               }
+            },
+            "manager": "fabric8-kubernetes-client",
+            "operation": "Update",
+            "time": "2024-02-23T02:36:36Z"
+         }
+      ],
+      "name": "flink-session",
+      "namespace": "flink",
+      "resourceVersion": "64220638614",
+      "selfLink": "/apis/flink.apache.org/v1beta1/namespaces/flink/flinkdeployments/flink-session",
+      "uid": "6f94fa16-9e05-482a-9b57-32e905b878f4"
+   },
+   "spec": {
+      "flinkConfiguration": {
+         "taskmanager.numberOfTaskSlots": "1"
+      },
+      "flinkVersion": "v1_13",
+      "image": "flink:1.13",
+      "jobManager": {
+         "podTemplate": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+               "name": "job-manager-pod-template"
+            },
+            "spec": {
+               "containers": [],
+               "nodeSelector": {
+                  "env": "flink"
+               }
+            }
+         },
+         "replicas": 1,
+         "resource": {
+            "cpu": 1,
+            "memory": "2048m"
+         }
+      },
+      "podTemplate": {
+         "apiVersion": "v1",
+         "kind": "Pod",
+         "metadata": {
+            "name": "pod-template"
+         },
+         "spec": {
+            "containers": [
+               {
+                  "env": [
+                     {
+                        "name": "ENABLE_BUILT_IN_PLUGINS",
+                        "value": "flink-s3-fs-hadoop-1.13.6.jar;flink-s3-fs-presto-1.13.6.jar"
+                     }
+                  ],
+                  "name": "flink-main-container",
+                  "volumeMounts": [
+                     {
+                        "mountPath": "/opt/flink/log",
+                        "name": "flink-logs"
+                     }
+                  ]
+               }
+            ],
+            "volumes": [
+               {
+                  "emptyDir": {
+                     "medium": "Memory"
+                  },
+                  "name": "flink-logs"
+               }
+            ]
+         }
+      },
+      "serviceAccount": "flink",
+      "taskManager": {
+         "podTemplate": {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+               "name": "task-manager-pod-template"
+            },
+            "spec": {
+               "containers": [],
+               "nodeSelector": {
+                  "env": "flink",
+                  "lifecycle": "spot"
+               }
+            }
+         },
+         "resource": {
+            "cpu": 1,
+            "memory": "2048m"
+         }
+      }
+   },
+   "status": {
+      "clusterInfo": {
+         "flink-revision": "b2ca390 @ 2022-02-03T14:54:22+01:00",
+         "flink-version": "1.13.6",
+         "total-cpu": "1.0",
+         "total-memory": "2147483648"
+      },
+      "jobManagerDeploymentStatus": "READY",
+      "jobStatus": {
+         "savepointInfo": {
+            "lastPeriodicSavepointTimestamp": 0,
+            "savepointHistory": []
+         }
+      },
+      "lifecycleState": "STABLE",
+      "reconciliationStatus": {
+         "lastReconciledSpec": "xxx",
+         "lastStableSpec": "xxx",
+         "reconciliationTimestamp": 1708655717898,
+         "state": "DEPLOYED"
+      }
+   }
+}

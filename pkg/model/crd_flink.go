@@ -28,13 +28,11 @@ type CrdFlinkDeploymentGetResponse struct {
 }
 
 type CrdFlinkDeployment struct {
-	ClusterName                string `json:"cluster_name"`
-	NameSpace                  string `json:"namespace"`
-	ClusterInfo                any    `json:"cluster_info"`
-	JobManagerDeploymentStatus any    `json:"job_manager_deployment_status"`
-	Status                     any    `json:"status"`     // 集群状态信息
-	Annotation                 any    `json:"annotation"` // 集群描述信息
-	Error                      any    `json:"error"`      // 集群错误信息
+	ClusterName string            `json:"cluster_name"`
+	NameSpace   string            `json:"namespace"`
+	Labels      map[string]string `json:"labels"`
+	Status      any               `json:"status"`     // 集群状态信息
+	Annotation  any               `json:"annotation"` // 集群描述信息
 }
 
 type CreateFlinkClusterRequest struct {
