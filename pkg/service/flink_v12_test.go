@@ -5,42 +5,23 @@ import (
 
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
-	"github.com/xops-infra/multi-k8s-client/pkg/service"
 )
-
-var k8s model.K8SContract
-
-func init() {
-	// err := godotenv.Load(".env")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	k8s = service.NewK8SService(model.K8SConfig{
-		Clusters: map[string]model.Cluster{
-			"test": {
-				KubePath: tea.String("~/.kube/config"),
-			},
-		},
-	})
-}
 
 // TEST FlinkV12ClusterList
 func TestFlinkV12ClusterList(t *testing.T) {
 	resp, err := k8s.FlinkV12ClusterList("test", model.FilterFlinkV12{
 		NameSpace: tea.String("flink"),
-		Name:      tea.String("app-session"),
+		// Name:      tea.String("app-session"),
 		// Owner: tea.String("dingyingjie"),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for k, v := range resp.(map[string]any)["items"].(map[string][]model.CrdFlinkDeployment) {
-		for _, item := range v {
-			t.Log(k, tea.Prettify(item.Status))
-		}
+	for _, item := range resp.Items {
+		t.Log(tea.Prettify(item))
 	}
-	t.Log(tea.Prettify(resp.(map[string]any)["total"]))
+
+	t.Log(tea.Prettify(resp.Total))
 }
 
 // TEST FlinkV12ClustertApply

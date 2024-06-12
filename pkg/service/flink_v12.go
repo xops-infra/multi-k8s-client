@@ -9,7 +9,7 @@ import (
 )
 
 // 查询 flinkNamespace 下的所有 deployment
-func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.FilterFlinkV12) (any, error) {
+func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.FilterFlinkV12) (model.CrdFlinkDeploymentGetResponse, error) {
 	if io, ok := s.IOs[k8sClusterName]; ok {
 		f := model.Filter{
 			NameSpace: tea.String("default"),
@@ -27,8 +27,10 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 		if err != nil {
 			return model.CrdFlinkDeploymentGetResponse{}, err
 		}
-		items := make(map[string][]model.CrdFlinkDeployment, 0)
+
+		clusterMap := make(map[string]model.CrdFlinkDeployment)
 		for _, item := range resp.Items {
+			// 创建的集群规则特这是带有 -jobmanager 或者 -taskmanager 的 deployment
 			var clustername string
 			if strings.HasSuffix(item.GetName(), "-jobmanager") {
 				clustername = strings.TrimSuffix(item.GetName(), "-jobmanager")
@@ -38,17 +40,36 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 			if clustername == "" {
 				continue
 			}
+
+			if _, ok := clusterMap[clustername]; ok {
+				// 已经存在的集群 丰富数据
+				clusterMap[clustername].Status.(map[string]any)[item.GetName()] = item.Status
+				clusterMap[clustername].Annotation.(map[string]any)[item.GetName()] = item.GetAnnotations()
+				continue
+			}
+			// TODO: 增加 configmap配置信息
 			var clusterItem = model.CrdFlinkDeployment{
 				NameSpace:   item.GetNamespace(),
-				ClusterName: item.GetName(),
-				Annotation:  item.GetAnnotations(),
-				Status:      item.Status,
+				ClusterName: clustername,
+				Annotation: map[string]any{
+					item.GetName(): item.GetAnnotations(),
+				},
+				Status: map[string]any{
+					item.GetName(): item.Status,
+				},
+				Labels: item.GetLabels(), // 集群创建时的标签都一样这里就取第一个
 			}
-			items[clustername] = append(items[clustername], clusterItem)
+			clusterMap[clustername] = clusterItem
 		}
-		return map[string]any{
-			"total": len(items),
-			"items": items,
+
+		// 转换
+		items := make([]model.CrdFlinkDeployment, 0)
+		for _, v := range clusterMap {
+			items = append(items, v)
+		}
+		return model.CrdFlinkDeploymentGetResponse{
+			Total: len(items),
+			Items: items,
 		}, nil
 	}
 	return model.CrdFlinkDeploymentGetResponse{}, fmt.Errorf("cluster not found")

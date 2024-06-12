@@ -1,4 +1,4 @@
-package test
+package service_test
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/alibabacloud-go/tea/tea"
-	"github.com/joho/godotenv"
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
 	"github.com/xops-infra/multi-k8s-client/pkg/service"
 )
@@ -17,17 +16,14 @@ import (
 var k8s model.K8SContract
 
 func init() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		panic(err)
-	}
+	// err := godotenv.Load(".env")
+	// if err != nil {
+	// 	panic(err)
+	// }
 	k8s = service.NewK8SService(model.K8SConfig{
 		Clusters: map[string]model.Cluster{
 			"test": {
-				KubeConfig: tea.String(os.Getenv("KUBE_CONFIG")),
-			},
-			"dev": {
-				KubeConfig: tea.String(os.Getenv("KUBEDEV_CONFIG")),
+				KubePath: tea.String("~/.kube/config"),
 			},
 		},
 	})
@@ -45,7 +41,7 @@ func TestGetK8SCluster(t *testing.T) {
 // TEST CrdFlinkDeploymentGet
 func TestCrdFlinkDeploymentGet(t *testing.T) {
 
-	resp, err := k8s.CrdFlinkDeploymentList("dev", model.Filter{
+	resp, err := k8s.CrdFlinkDeploymentList("test", model.Filter{
 		NameSpace: tea.String("flink"),
 		// FieldSelector: tea.String("metadata.name=flink-session-17,metadata.namespace=default"),
 	})
