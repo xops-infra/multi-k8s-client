@@ -43,7 +43,7 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 		}
 		var items []model.CrdFlinkDeployment
 		for _, item := range resp.Items {
-			fmt.Println(tea.Prettify(item.Object))
+			// fmt.Println(tea.Prettify(item.Object))
 			items = append(items, model.CrdFlinkDeployment{
 				ClusterName: item.GetName(),
 				NameSpace:   item.GetNamespace(),
@@ -148,7 +148,7 @@ func (s *K8SService) CrdSparkApplicationList(k8sClusterName string, filter model
 		}
 		var items []model.CrdSparkApplication
 		for _, item := range resp.Items {
-			fmt.Println(tea.Prettify(item))
+			// fmt.Println(tea.Prettify(item))
 			items = append(items, model.CrdSparkApplication{
 				Name:       item.GetName(),
 				Namespace:  item.GetNamespace(),

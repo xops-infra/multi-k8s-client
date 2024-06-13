@@ -132,7 +132,7 @@ func (s *K8SService) FlinkV12ClustertApply(k8sClusterName string, req model.Crea
 		if err != nil {
 			errors["service"] = err.Error()
 		}
-		_, err = io.ServiceApply(ServiceLB)
+		LBResult, err := io.ServiceApply(ServiceLB)
 		if err != nil {
 			errors["service-lb"] = err.Error()
 		}
@@ -141,7 +141,7 @@ func (s *K8SService) FlinkV12ClustertApply(k8sClusterName string, req model.Crea
 			resp.Result = errors
 			return resp, fmt.Errorf("k8s apply error: %v", errors)
 		}
-		resp.Info = "create deployment*2, configmap, service*2, pvc*1"
+		resp.Info = "create deployment*2, configmap, service*2, pvc*1 success, LB: " + tea.Prettify(LBResult)
 		return resp, nil
 	}
 	return resp, fmt.Errorf("cluster not found")

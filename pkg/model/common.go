@@ -3,7 +3,6 @@ package model
 import (
 	appv1 "k8s.io/api/apps/v1"
 	podV1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	rbacV1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -38,17 +37,17 @@ type K8SIO interface {
 	DeploymentDelete(namespace, name string) error
 
 	// SERVICE
-	ServiceList(filter Filter) (*v1.ServiceList, error)
-	ServiceApply(req ApplyServiceRequest) (any, error)
+	ServiceList(filter Filter) (*podV1.ServiceList, error)
+	ServiceApply(req ApplyServiceRequest) (*podV1.Service, error)
 	ServiceDelete(namespace, name string) error
 
 	// CONFIGMAP
-	ConfigMapList(filter Filter) (*v1.ConfigMapList, error)
+	ConfigMapList(filter Filter) (*podV1.ConfigMapList, error)
 	ConfigMapApply(req ApplyConfigMapRequest) (any, error)
 	ConfigMapDelete(namespace, name string) error
 
 	// PVC
-	PvcList(filter Filter) (*v1.PersistentVolumeClaimList, error)
+	PvcList(filter Filter) (*podV1.PersistentVolumeClaimList, error)
 	PvcApply(req ApplyPvcRequest) (any, error)
 	PvcDelete(namespace, name string) error
 
