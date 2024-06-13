@@ -77,11 +77,11 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 				Value: tea.String("flink-s3-fs-hadoop-1.13.6.jar;flink-s3-fs-presto-1.13.6.jar"),
 			},
 		},
-		TaskManager: &model.TaskManager{
+		TaskManager: &model.Manager{
 			NodeSelector: &map[string]string{"env": "flink"},
 			Resource:     &model.FlinkResource{Memory: tea.String("1024m"), CPU: tea.String("2")},
 		},
-		JobManager: &model.JobManager{
+		JobManager: &model.Manager{
 			NodeSelector: &map[string]string{"env": "flink"},
 			Resource:     &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
 		},

@@ -65,6 +65,16 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 		// 转换
 		items := make([]model.CrdFlinkDeployment, 0)
 		for _, v := range clusterMap {
+			// 增加 LoadBlance 连接信息
+			lbResp, err := io.ServiceList(model.Filter{
+				NameSpace:     tea.String(v.NameSpace),
+				FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s-jobmanager-lb-service", v.ClusterName)), // app-session-jobmanager-lb-service
+			})
+			if err == nil {
+				for k, item := range lbResp.Items {
+					v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
+				}
+			}
 			items = append(items, v)
 		}
 		return model.CrdFlinkDeploymentGetResponse{
@@ -132,12 +142,11 @@ func (s *K8SService) FlinkV12ClustertApply(k8sClusterName string, req model.Crea
 		if err != nil {
 			errors["service"] = err.Error()
 		}
-		LBResult, err := io.ServiceApply(ServiceLB)
+		_, err = io.ServiceApply(ServiceLB)
 		if err != nil {
 			errors["service-lb"] = err.Error()
 		}
-		// 优化打印 LB 的请求公网地址+端口
-		resp.Info = "ui: http://" + LBResult.Status.LoadBalancer.Ingress[0].Hostname + ":" + fmt.Sprint(LBResult.Spec.Ports[0].Port)
+		// 优化打印 LB 的请求公网地址+端口，创建的时候看不到，改到查询里面展示
 
 		if len(errors) > 0 {
 			resp.Result = errors
