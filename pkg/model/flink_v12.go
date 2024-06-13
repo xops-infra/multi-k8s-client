@@ -315,12 +315,10 @@ func (c *CreateFlinkV12ClusterRequest) NewConfigMap() ApplyConfigMapRequest {
 		"parallelism.default":         1,
 
 		"taskmanager.numberOfTaskSlots":        2,
-		"taskmanager.memory.process.size":      "4096m",
-		"taskmanager.memory.task.heap.size":    "2000m",
-		"web.upload.dir":                       "/opt/flink/target",
-		"jobmanager.rpc.address":               fmt.Sprintf(JobManagerServiceName, *c.Name),
 		"jobmanager.memory.flink.size":         "2048m",
 		"jobmanager.memory.jvm-metaspace.size": "2048m",
+		"web.upload.dir":                       "/opt/flink/target",
+		"jobmanager.rpc.address":               fmt.Sprintf(JobManagerServiceName, *c.Name),
 	}
 	if c.FlinkConfigRequest != nil {
 		for k, v := range c.FlinkConfigRequest {

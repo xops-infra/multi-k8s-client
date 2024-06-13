@@ -136,13 +136,14 @@ func (s *K8SService) FlinkV12ClustertApply(k8sClusterName string, req model.Crea
 		if err != nil {
 			errors["service-lb"] = err.Error()
 		}
+		// 优化打印 LB 的请求公网地址+端口
+		resp.Info = "ui: http://" + LBResult.Status.LoadBalancer.Ingress[0].Hostname + ":" + fmt.Sprint(LBResult.Spec.Ports[0].Port)
 
 		if len(errors) > 0 {
 			resp.Result = errors
 			return resp, fmt.Errorf("k8s apply error: %v", errors)
 		}
 		resp.Result = "create deployment*2, configmap, service*2, pvc*1 success"
-		resp.Info = tea.Prettify(LBResult)
 		return resp, nil
 	}
 	return resp, fmt.Errorf("cluster not found")
