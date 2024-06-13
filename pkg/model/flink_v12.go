@@ -447,16 +447,7 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 		}
 	}
 
-	sideCarContainer := map[string]any{
-		"name":  "busybox",
-		"image": "busybox",
-		"command": []string{
-			"sh",
-			"-c",
-			"echo hello from sidecar",
-		},
-	}
-	yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"] = []map[string]any{jobContainer, sideCarContainer}
+	yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"] = []map[string]any{jobContainer}
 
 	// nodeSelector 组装
 	if c.NodeSelector != nil {
