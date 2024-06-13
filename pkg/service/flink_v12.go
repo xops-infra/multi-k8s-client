@@ -141,7 +141,8 @@ func (s *K8SService) FlinkV12ClustertApply(k8sClusterName string, req model.Crea
 			resp.Result = errors
 			return resp, fmt.Errorf("k8s apply error: %v", errors)
 		}
-		resp.Info = "create deployment*2, configmap, service*2, pvc*1 success, LB: " + tea.Prettify(LBResult)
+		resp.Result = "create deployment*2, configmap, service*2, pvc*1 success"
+		resp.Info = tea.Prettify(LBResult)
 		return resp, nil
 	}
 	return resp, fmt.Errorf("cluster not found")
@@ -162,12 +163,34 @@ func (s *K8SService) FlinkV12ClusterDelete(k8sClusterName string, req model.Dele
 				return fmt.Errorf("task deployment delete error: %v", err)
 			}
 		}
+
+		// 删除配置，衍生的资源也会被删除
+		/*
+			labels:
+			   app: flink-session
+			   configmap-type: high-availability
+			   type: flink-native-kubernetes
+		*/
 		err = io.ConfigMapDelete(tea.StringValue(req.NameSpace), fmt.Sprintf(model.ConfigMapV12Name, *req.ClusterName))
 		if err != nil {
 			if !strings.Contains(err.Error(), "not found") {
 				return fmt.Errorf("configmap delete error: %v", err)
 			}
 		}
+		resp, err := io.ConfigMapList(model.Filter{
+			NameSpace:     tea.String("flink"),
+			LabelSelector: tea.String(fmt.Sprintf("app=%s,configmap-type=high-availability,type=flink-native-kubernetes", *req.ClusterName)),
+		})
+		if err != nil {
+			return fmt.Errorf("list configmaps error: %v", err)
+		}
+		for _, item := range resp.Items {
+			err = io.ConfigMapDelete(tea.StringValue(req.NameSpace), item.GetName())
+			if err != nil {
+				return fmt.Errorf("configmap delete error: %v", err)
+			}
+		}
+
 		err = io.ServiceDelete(tea.StringValue(req.NameSpace), fmt.Sprintf(model.JobManagerServiceName, *req.ClusterName))
 		if err != nil {
 			if !strings.Contains(err.Error(), "not found") {

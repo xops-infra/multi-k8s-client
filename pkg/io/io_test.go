@@ -276,7 +276,8 @@ func TestServiceDelete(t *testing.T) {
 // ConfigMapList
 func TestConfigmapList(t *testing.T) {
 	resp, err := client.ConfigMapList(model.Filter{
-		NameSpace: tea.String("default"),
+		NameSpace:     tea.String("flink"),
+		LabelSelector: tea.String("app=flink-session,configmap-type=high-availability,type=flink-native-kubernetes"),
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -14,6 +14,31 @@ import (
  * flink1.12.7
  因为 Operator 支持到最低版本是 1.13， 不支持 1.12 版本所以这里使用完整 yaml相关内容来实现
  只抽取必要参数，相对定制化
+
+先创建如下资源
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: flink
+  name: flink-configmap-role
+rules:
+  - apiGroups: ["*"]
+    resources: ["configmaps"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flink-configmap-role-binding
+  namespace: flink
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: flink
+roleRef:
+  kind: Role
+  name: flink-configmap-role
+  apiGroup: rbac.authorization.k8s.io
 */
 
 const (
@@ -290,7 +315,7 @@ func (c *CreateFlinkV12ClusterRequest) NewConfigMap() ApplyConfigMapRequest {
 		"parallelism.default":         1,
 
 		"taskmanager.numberOfTaskSlots":        2,
-		"taskmanager.memory.flink.size":        "2048m",
+		"taskmanager.memory.flink.size":        "4096m",
 		"taskmanager.memory.task.heap.size":    "3000m",
 		"web.upload.dir":                       "/opt/flink/target",
 		"jobmanager.rpc.address":               fmt.Sprintf(JobManagerServiceName, *c.Name),
