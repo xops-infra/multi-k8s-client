@@ -487,6 +487,9 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 	taskManagerContainer := map[string]any{
 		"name":  "taskmanager",
 		"image": FlinkVersion,
+		"args": []string{
+			"taskmanager",
+		},
 		"ports": []map[string]any{
 			{
 				"containerPort": 6122,

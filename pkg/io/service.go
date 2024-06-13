@@ -24,7 +24,7 @@ func (io *k8sClient) ServiceList(filter model.Filter) (*v1.ServiceList, error) {
 	return resp, nil
 }
 
-func (io *k8sClient) ServiceApply(req model.ApplyServiceRequest) (any, error) {
+func (io *k8sClient) ServiceApply(req model.ApplyServiceRequest) (*v1.Service, error) {
 	if req.Namespace == nil {
 		req.Namespace = tea.String(v1.NamespaceDefault)
 	}
