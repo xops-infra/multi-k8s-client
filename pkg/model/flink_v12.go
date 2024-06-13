@@ -295,6 +295,10 @@ func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
 			Type: tea.String("LoadBalancer"),
 		},
 	}
+	if c.LoadBalancer != nil {
+		req.Label = c.LoadBalancer.Labels
+		req.Annotations = c.LoadBalancer.Annotations
+	}
 	return req
 }
 
