@@ -58,7 +58,7 @@ func TestFlinkV12ClustertApply(t *testing.T) {
 // TEST FlinkV12ClusterDelete
 func TestFlinkV12ClusterDelete(t *testing.T) {
 	err := k8s.FlinkV12ClusterDelete("test", model.DeleteFlinkClusterRequest{
-		ClusterName: tea.String("app-session"),
+		ClusterName: tea.String("flink-session"),
 		NameSpace:   tea.String("flink"),
 	})
 	if err != nil {
