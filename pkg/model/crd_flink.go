@@ -44,8 +44,8 @@ type CreateFlinkClusterRequest struct {
 	FlinkConfiguration map[string]any    `json:"flink_configuration"`              // flink配置,键值对的方式比如: {"taskmanager.numberOfTaskSlots": "2"}
 	EnableFluentit     *bool             `json:"enable_fluentbit" default:"false"` // sidecar fluentbit
 	Env                []Env             `json:"env"`                              // 环境变量,同时给JM和TM设置环境变量
-	TaskManager        *TaskManager      `json:"task_manager"`
-	JobManager         *JobManager       `json:"job_manager"`
+	TaskManager        *Manager          `json:"task_manager"`
+	JobManager         *Manager          `json:"job_manager"`
 	Job                *Job              `json:"job"`       // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
 	Submitter          *string           `json:"submitter"` // 提交人
 	Labels             map[string]string `json:"labels"`    // 自定义标签
@@ -302,12 +302,7 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	return yaml
 }
 
-type TaskManager struct {
-	Resource     *FlinkResource     `json:"resource"`
-	NodeSelector *map[string]string `json:"node_selector"`
-}
-
-type JobManager struct {
+type Manager struct {
 	Resource     *FlinkResource     `json:"resource"`
 	NodeSelector *map[string]string `json:"node_selector"`
 }

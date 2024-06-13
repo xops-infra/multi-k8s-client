@@ -29,7 +29,7 @@ func TestFlinkV12ClustertApply(t *testing.T) {
 	req := model.CreateFlinkV12ClusterRequest{
 		Name:      tea.String("app-session"),
 		NameSpace: tea.String("flink"),
-		Owner:     tea.String("zhangsan"),
+		Owner:     tea.String("zhoushoujian"),
 		Image:     tea.String("flink:1.12.7"),
 		Env:       map[string]string{"ENABLE_BUILT_IN_PLUGINS": "flink-s3-fs-hadoop-1.12.7.jar;flink-s3-fs-presto-1.12.7.jar"},
 		LoadBalancer: &model.LoadBalancerRequest{
@@ -48,17 +48,17 @@ func TestFlinkV12ClustertApply(t *testing.T) {
 		NodeSelector:       map[string]any{"env": "flink"},
 	}
 
-	_, err := k8s.FlinkV12ClustertApply("test", req)
+	resp, err := k8s.FlinkV12ClustertApply("test", req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("FlinkV12ClusterApply success")
+	t.Log("FlinkV12ClusterApply success", tea.Prettify(resp))
 }
 
 // TEST FlinkV12ClusterDelete
 func TestFlinkV12ClusterDelete(t *testing.T) {
 	err := k8s.FlinkV12ClusterDelete("test", model.DeleteFlinkClusterRequest{
-		ClusterName: tea.String("flink-session"),
+		ClusterName: tea.String("app-session"),
 		NameSpace:   tea.String("flink"),
 	})
 	if err != nil {
