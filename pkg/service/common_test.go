@@ -20,22 +20,28 @@ func init() {
 	// if err != nil {
 	// 	panic(err)
 	// }
-	k8s = service.NewK8SService(model.K8SConfig{
-		Clusters: map[string]model.Cluster{
-			"test": {
-				KubePath: tea.String("~/.kube/config"),
-			},
+	_k8s, err := service.NewK8SService([]model.Cluster{
+		{
+			KubePath: tea.String("~/.kube/config"),
+			Name:     tea.String("test"),       // 集群名称
+			Alias:    tea.String("test_alias"), // 集群别名
+		}, {
+			KubePath: tea.String("~/.kube/config"),
+			Name:     tea.String("testa"),
+			Alias:    tea.String("test_alias_a"),
 		},
 	})
+	if err != nil {
+		panic(err)
+	}
+
+	k8s = _k8s
 }
 
 // TEST GetK8SCluster
 func TestGetK8SCluster(t *testing.T) {
-	clusterNames, err := k8s.GetK8SCluster()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("clusterNames: %v", clusterNames)
+	clusterNames := k8s.GetK8SCluster()
+	t.Logf("clusterNames: %v", tea.Prettify(clusterNames))
 }
 
 // TEST CrdFlinkDeploymentGet

@@ -26,6 +26,7 @@ func (s *Filter) ToOptions() metav1.ListOptions {
 }
 
 type K8SIO interface {
+	GetClusterInfo() ClusterInfo
 	// POD
 	PodList(namespace string) (*podV1.PodList, error)
 	PodGet(namespace, name string) (*podV1.Pod, error)
@@ -70,7 +71,7 @@ type K8SIO interface {
 }
 
 type K8SContract interface {
-	GetK8SCluster() ([]string, error) // 获取当前程序注册支持的所有k8s集群
+	GetK8SCluster() []ClusterInfo // 获取当前程序注册支持的所有k8s集群
 
 	// Flink
 	CrdFlinkDeploymentList(k8sClusterName string, filter Filter) (CrdFlinkDeploymentGetResponse, error)
@@ -91,11 +92,14 @@ type K8SContract interface {
 	CrdSparkApplicationDelete(k8sClusterName string, req DeleteSparkApplicationRequest) error
 }
 
-type K8SConfig struct {
-	Clusters map[string]Cluster `json:"clusters"`
+type ClusterInfo struct {
+	Name  *string `json:"name"`
+	Alias *string `json:"alias"`
 }
 
 type Cluster struct {
+	Name       *string `json:"name" binding:"required"`
+	Alias      *string `json:"alias" binding:"required"`
 	KubeConfig *string `json:"kube_config"` // base64
 	KubePath   *string `json:"kube_path"`   // path
 }

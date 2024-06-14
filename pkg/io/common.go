@@ -2,6 +2,7 @@ package io
 
 import (
 	"encoding/base64"
+	"fmt"
 	"strings"
 
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
@@ -14,8 +15,9 @@ import (
 )
 
 type k8sClient struct {
-	clientSet *kubernetes.Clientset
-	dynamic   dynamic.Interface
+	clusterInfo model.ClusterInfo
+	clientSet   *kubernetes.Clientset
+	dynamic     dynamic.Interface
 }
 
 // kubePath or kubeConfig(base64 kubeconfig), kubePath > kubeConfig if both exist
@@ -45,7 +47,7 @@ func NewK8SClient(cfg model.Cluster) (model.K8SIO, error) {
 			return nil, err
 		}
 	} else {
-		panic("need kubePath or kubeConfig")
+		return nil, fmt.Errorf("need kubePath or kubeConfig")
 	}
 
 	// create the clientset
@@ -55,12 +57,20 @@ func NewK8SClient(cfg model.Cluster) (model.K8SIO, error) {
 	}
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &k8sClient{
 		clientSet: clientset,
 		dynamic:   dynamicClient,
+		clusterInfo: model.ClusterInfo{
+			Name:  cfg.Name,
+			Alias: cfg.Alias,
+		},
 	}, nil
+}
+
+func (c *k8sClient) GetClusterInfo() model.ClusterInfo {
+	return c.clusterInfo
 }
 
 // for dynamic

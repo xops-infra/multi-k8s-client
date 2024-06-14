@@ -33,7 +33,7 @@ func TestFlinkV12ClustertApply(t *testing.T) {
 		Image:     tea.String("flink:1.12.7"),
 		Env:       map[string]string{"ENABLE_BUILT_IN_PLUGINS": "flink-s3-fs-hadoop-1.12.7.jar;flink-s3-fs-presto-1.12.7.jar"},
 		LoadBalancer: &model.LoadBalancerRequest{
-			Annotations: map[string]string{"service.kubernetes.io/loadbalance-id": "lb-xxx"},
+			Annotations: map[string]string{"service.kubernetes.io/tke-existed-lbid": "lb-xxx"},
 			Labels:      map[string]string{"used-by": "ui"},
 		},
 		JobManager: &model.JobManagerV12{
