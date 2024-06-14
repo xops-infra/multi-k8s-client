@@ -13,26 +13,29 @@ type K8SService struct {
 	IOs map[string]model.K8SIO
 }
 
-func NewK8SService(configs model.K8SConfig) model.K8SContract {
+func NewK8SService(configs []model.Cluster) (model.K8SContract, error) {
 	var ios = make(map[string]model.K8SIO)
-	for k, v := range configs.Clusters {
-		newClient, err := io.NewK8SClient(v)
+	for _, cluster := range configs {
+		newClient, err := io.NewK8SClient(cluster)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		ios[k] = newClient
+		if cluster.Alias == nil || cluster.Name == nil {
+			return nil, fmt.Errorf("cluster name or alias is nil")
+		}
+		ios[*cluster.Alias] = newClient
 	}
 	return &K8SService{
 		IOs: ios,
-	}
+	}, nil
 }
 
-func (s *K8SService) GetK8SCluster() ([]string, error) {
-	var clusterNames []string
-	for k := range s.IOs {
-		clusterNames = append(clusterNames, k)
+func (s *K8SService) GetK8SCluster() []model.ClusterInfo {
+	var clusterNames []model.ClusterInfo
+	for _, v := range s.IOs {
+		clusterNames = append(clusterNames, v.GetClusterInfo())
 	}
-	return clusterNames, nil
+	return clusterNames
 }
 
 func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.Filter) (model.CrdFlinkDeploymentGetResponse, error) {
