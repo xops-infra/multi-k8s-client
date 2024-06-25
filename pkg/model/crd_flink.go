@@ -238,11 +238,7 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	if req.NameSpace != nil {
 		yaml["metadata"].(map[string]interface{})["namespace"] = *req.NameSpace
 	}
-	if req.Submitter != nil {
-		yaml["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{
-			"CreatedBy": *req.Submitter,
-		}
-	}
+
 	if req.Image != nil {
 		yaml["spec"].(map[string]interface{})["image"] = *req.Image
 	}
@@ -290,13 +286,13 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	if req.ServiceAccount != nil {
 		yaml["spec"].(map[string]interface{})["serviceAccount"] = *req.ServiceAccount
 	}
-	if req.Submitter != nil {
-		yaml["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{
-			"CreatedBy": *req.Submitter,
-		}
-	}
 	if req.Labels != nil {
 		yaml["metadata"].(map[string]interface{})["labels"] = req.Labels
+	} else {
+		yaml["metadata"].(map[string]interface{})["labels"] = map[string]interface{}{}
+	}
+	if req.Submitter != nil {
+		yaml["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["owner"] = *req.Submitter
 	}
 
 	return yaml
@@ -385,9 +381,8 @@ func (req *CreateFlinkSessionJobRequest) ToYaml() map[string]any {
 		yaml["spec"].(map[string]interface{})["deploymentName"] = tea.StringValue(req.ClusterName)
 	}
 	if req.Submitter != nil {
-		yaml["metadata"].(map[string]interface{})["annotations"] = map[string]interface{}{
-			"created-by": *req.Submitter,
-		}
+		yaml["metadata"].(map[string]interface{})["labels"] = map[string]interface{}{}
+		yaml["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["owner"] = tea.StringValue(req.Submitter)
 	}
 	if req.Job != nil {
 		yaml["spec"].(map[string]interface{})["job"] = req.Job.ToYaml()
