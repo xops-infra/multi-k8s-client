@@ -3,9 +3,6 @@
    "apiVersion": "flink.apache.org/v1beta1",
    "kind": "FlinkDeployment",
    "metadata": {
-      "annotations": {
-         "CreatedBy": "zhoushoujian"
-      },
       "creationTimestamp": "2024-02-23T02:35:17Z",
       "finalizers": [
          "flinkdeployments.flink.apache.org/finalizer"

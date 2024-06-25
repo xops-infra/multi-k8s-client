@@ -65,7 +65,7 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 
 func (s *K8SService) CrdFlinkDeploymentApply(k8sCluster string, req model.CreateFlinkClusterRequest) (model.CreateResponse, error) {
 	if io, ok := s.IOs[k8sCluster]; ok {
-		resp, err := io.CrdFlinkDeploymentApply(tea.StringValue(req.NameSpace), req.ToYaml())
+		resp, err := io.CrdFlinkDeploymentApply(req.ToYaml())
 		if err != nil {
 			return model.CreateResponse{}, err
 		}
