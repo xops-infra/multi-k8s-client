@@ -24,16 +24,13 @@ func (c *k8sClient) CrdFlinkDeploymentList(filter model.Filter) (*unstructured.U
 	return result, nil
 }
 
-func (c *k8sClient) CrdFlinkDeploymentApply(namespace string, yaml map[string]any) (any, error) {
+func (c *k8sClient) CrdFlinkDeploymentApply(yaml map[string]any) (any, error) {
 	flinkDeploymentRes := GetGVR("flink.apache.org", "v1beta1", "flinkdeployments")
 
 	flinkDeployment := &unstructured.Unstructured{
 		Object: yaml,
 	}
-	if namespace == "" {
-		namespace = apiv1.NamespaceDefault
-	}
-	flinkDeployment.SetNamespace(namespace)
+	namespace := yaml["metadata"].(map[string]any)["namespace"].(string)
 	result, err := c.dynamic.Resource(flinkDeploymentRes).Namespace(namespace).Create(context.TODO(), flinkDeployment, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err

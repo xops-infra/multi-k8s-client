@@ -128,7 +128,8 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 		"apiVersion": "flink.apache.org/v1beta1",
 		"kind":       "FlinkDeployment",
 		"metadata": map[string]interface{}{
-			"name": "basic-example",
+			"name":      "basic-example",
+			"namespace": "default",
 		},
 		"spec": map[string]interface{}{
 			"image":        "flink:1.17",
@@ -146,6 +147,16 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 					"memory": "2048m",
 					"cpu":    1,
 				},
+				"podTemplate": map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "Pod",
+					"metadata": map[string]interface{}{
+						"labels": map[string]interface{}{
+							"sdk":   "multi-k8s-client",
+							"owner": tea.StringValue(req.Submitter),
+						},
+					},
+				},
 			},
 			"taskManager": map[string]interface{}{
 				"resource": map[string]interface{}{
@@ -157,6 +168,10 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 					"kind":       "Pod",
 					"metadata": map[string]interface{}{
 						"name": "task-manager-pod-template",
+						"labels": map[string]interface{}{
+							"sdk":   "multi-k8s-client",
+							"owner": tea.StringValue(req.Submitter),
+						},
 					},
 					"spec": map[string]interface{}{
 						"initContainers": []map[string]interface{}{

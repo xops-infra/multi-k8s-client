@@ -76,13 +76,15 @@ func TestCrdFlinkDeploymentList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("List FlinkDeployment success", tea.Prettify(resp.Items))
+	t.Log("List FlinkDeployment success", tea.Prettify(len(resp.Items)))
 
 }
 
 // FlinkApplication Create
 func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 	req := model.CreateFlinkClusterRequest{
+		NameSpace:   tea.String("flink"),
+		Submitter:   tea.String("zhoushoujian"),
 		ClusterName: tea.String("application-cluster"),
 		Job: &model.Job{
 			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
@@ -91,7 +93,7 @@ func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 		},
 	}
 
-	resp, err := client.CrdFlinkDeploymentApply("", req.ToYaml())
+	resp, err := client.CrdFlinkDeploymentApply(req.ToYaml())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,10 +103,11 @@ func TestCrdFlinkDeploymentApplyApplication(t *testing.T) {
 // FlinkSession Create
 func TestCrdFlinkDeploymentApplySession(t *testing.T) {
 	req := model.CreateFlinkClusterRequest{
+		NameSpace:   tea.String("flink"),
 		ClusterName: tea.String("session-cluster"),
 	}
 
-	resp, err := client.CrdFlinkDeploymentApply("", req.ToYaml())
+	resp, err := client.CrdFlinkDeploymentApply(req.ToYaml())
 	if err != nil {
 		t.Fatal(err)
 	}

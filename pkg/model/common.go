@@ -57,7 +57,7 @@ type K8SIO interface {
 
 	// CRD Flink
 	CrdFlinkDeploymentList(Filter) (*unstructured.UnstructuredList, error)
-	CrdFlinkDeploymentApply(namespace string, yaml map[string]any) (any, error)
+	CrdFlinkDeploymentApply(yaml map[string]any) (any, error)
 	CrdFlinkDeploymentDelete(namespace, name string) error
 
 	CrdFlinkSessionJobList(Filter) (*unstructured.UnstructuredList, error)
