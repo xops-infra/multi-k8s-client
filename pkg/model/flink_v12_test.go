@@ -55,8 +55,22 @@ func TestNewConfigMap(t *testing.T) {
 
 // NewJobManagerDeployment
 func TestNewJobManagerDeployment(t *testing.T) {
+	req.JobManager.SideCars = &[]model.SideCar{
+		{
+			Name:    tea.String("sidecar"),
+			Image:   tea.String("busybox"),
+			Command: []string{"sleep", "10"},
+			Env: []model.Env{
+				{Name: tea.String("key"), Value: tea.String("value")},
+			},
+			LivenessProbe: &model.LivenessProbe{
+				Exec: &model.Exec{
+					Command: []string{"sleep", "10"},
+				},
+			},
+		},
+	}
 	deployment := req.NewJobManagerDeployment()
-	fmt.Println(tea.Prettify(deployment))
 	createDeploymentRequest, err := model.NewDeploymentCreateFromMap(deployment)
 	if err != nil {
 		t.Fatalf("err: %v", err)
