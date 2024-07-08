@@ -55,7 +55,7 @@ func TestNewConfigMap(t *testing.T) {
 
 // NewJobManagerDeployment
 func TestNewJobManagerDeployment(t *testing.T) {
-	req.JobManager.SideCars = &[]model.SideCar{
+	req.JobManager.SideCars = []model.SideCar{
 		{
 			Name:    tea.String("sidecar"),
 			Image:   tea.String("busybox"),
