@@ -204,7 +204,17 @@ type LoadBalancerRequest struct {
 type JobManagerV12 struct {
 	Resource     *FlinkResource     `json:"resource"`
 	NodeSelector *map[string]string `json:"node_selector"`
-	PvcSize      *int               `json:"pvcSize" default:"10"`
+	PvcSize      *int               `json:"pvc_size" default:"10"`
+	SideCars     *[]SideCar         `json:"side_cars"`
+}
+
+type SideCar struct {
+	Name          *string          `json:"name" binding:"required"`
+	Image         *string          `json:"image" binding:"required"`
+	Command       []string         `json:"command" binding:"required"`
+	Env           []Env            `json:"env"`
+	VolumeMounts  []map[string]any `json:"volume_mounts"` // example, [{"name": "xxx", "mountPath": "/xxx"}]
+	LivenessProbe *LivenessProbe   `json:"liveness_probe"`
 }
 
 type TaskManagerV12 struct {
@@ -481,6 +491,33 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 	// nodeSelector 组装
 	if c.NodeSelector != nil {
 		yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["nodeSelector"] = c.NodeSelector
+	}
+
+	// support sidecar
+	if c.JobManager != nil && c.JobManager.SideCars != nil && len(*c.JobManager.SideCars) > 0 {
+		for _, sideCar := range *c.JobManager.SideCars {
+			_sideCar := map[string]any{
+				"name":    sideCar.Name,
+				"image":   sideCar.Image,
+				"command": sideCar.Command,
+			}
+			if sideCar.Env != nil {
+				_sideCar["env"] = sideCar.Env
+			}
+
+			if sideCar.VolumeMounts != nil && len(sideCar.VolumeMounts) > 0 {
+				_sideCar["volumeMounts"] = sideCar.VolumeMounts
+			}
+
+			if sideCar.LivenessProbe != nil {
+				_sideCar["livenessProbe"] = sideCar.LivenessProbe
+			}
+
+			yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"] = append(
+				yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"].([]map[string]any),
+				_sideCar,
+			)
+		}
 	}
 
 	return yaml

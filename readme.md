@@ -11,6 +11,10 @@ go get -u github.com/xops-infra/multi-k8s-client@main
 
 ### 更新日志
 
+- 2024-07
+
+  - feat: support jobmanager sidecar;
+
 - 2024-06
   - feat: support flink v1.12(flink-operator is not support flink version below 1.12);
 - 2024-04
