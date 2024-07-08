@@ -205,7 +205,7 @@ type JobManagerV12 struct {
 	Resource     *FlinkResource     `json:"resource"`
 	NodeSelector *map[string]string `json:"node_selector"`
 	PvcSize      *int               `json:"pvc_size" default:"10"`
-	SideCars     *[]SideCar         `json:"side_cars"`
+	SideCars     []SideCar          `json:"side_cars"`
 }
 
 type SideCar struct {
@@ -494,8 +494,8 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 	}
 
 	// support sidecar
-	if c.JobManager != nil && c.JobManager.SideCars != nil && len(*c.JobManager.SideCars) > 0 {
-		for _, sideCar := range *c.JobManager.SideCars {
+	if c.JobManager != nil && len(c.JobManager.SideCars) > 0 {
+		for _, sideCar := range c.JobManager.SideCars {
 			_sideCar := map[string]any{
 				"name":    sideCar.Name,
 				"image":   sideCar.Image,
