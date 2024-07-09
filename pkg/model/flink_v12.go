@@ -469,13 +469,15 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 		jobContainer["image"] = *c.Image
 	}
 	if c.JobManager != nil && c.JobManager.Resource != nil {
-		cpuR := v1.ResourceList{
-			v1.ResourceCPU:    resource.MustParse(*c.JobManager.Resource.CPU),
-			v1.ResourceMemory: resource.MustParse(*c.JobManager.Resource.Memory),
-		}
 		jobContainer["resources"] = map[string]any{
-			"requests": v1.ResourceList(cpuR),
-			"limits":   v1.ResourceList(cpuR),
+			"requests": v1.ResourceList(v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse(*c.JobManager.Resource.CPU),
+				v1.ResourceMemory: resource.MustParse(*c.JobManager.Resource.Memory),
+			}),
+			"limits": v1.ResourceList(v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse(*c.JobManager.Resource.CPU),
+				v1.ResourceMemory: resource.MustParse(*c.JobManager.Resource.Memory),
+			}),
 		}
 	}
 
@@ -605,13 +607,15 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 		}
 	}
 	if c.TaskManager != nil && c.TaskManager.Resource != nil {
-		cpuR := v1.ResourceList{
-			v1.ResourceCPU:    resource.MustParse(*c.TaskManager.Resource.CPU),
-			v1.ResourceMemory: resource.MustParse(*c.TaskManager.Resource.Memory),
-		}
 		taskManagerContainer["resources"] = map[string]any{
-			"requests": v1.ResourceList(cpuR),
-			"limits":   v1.ResourceList(cpuR),
+			"requests": v1.ResourceList(v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse("100m"), // 默认少点，避免资源浪费
+				v1.ResourceMemory: resource.MustParse(*c.TaskManager.Resource.Memory),
+			}),
+			"limits": v1.ResourceList(v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse(*c.TaskManager.Resource.CPU),
+				v1.ResourceMemory: resource.MustParse(*c.TaskManager.Resource.Memory),
+			}),
 		}
 	}
 
