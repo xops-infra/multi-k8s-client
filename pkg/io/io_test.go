@@ -352,11 +352,11 @@ func TestDeploymentCreate(t *testing.T) {
 			Resource: &model.FlinkResource{Memory: tea.String("1024m"), CPU: tea.String("1")},
 		},
 		TaskManager: &model.TaskManagerV12{
-			Nu:       tea.Int(2),
-			Resource: &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
+			Nu:           tea.Int(2),
+			Resource:     &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
+			NodeSelector: &map[string]string{"kubernetes.io/os": "linux"},
 		},
 		FlinkConfigRequest: map[string]any{"taskmanager.numberOfTaskSlots": 2},
-		NodeSelector:       map[string]any{"kubernetes.io/os": "linux"},
 	}
 	jobDy := req.NewJobManagerDeployment()
 	// fmt.Println(tea.Prettify(dy))
