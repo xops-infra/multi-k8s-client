@@ -405,6 +405,8 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 			},
 		},
 	}
+	// strategy
+	yaml["spec"].(map[string]any)["strategy"].(map[string]any)["type"] = "Recreate"
 
 	jobContainer := map[string]any{
 		"name":  "jobmanager",
