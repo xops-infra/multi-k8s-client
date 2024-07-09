@@ -233,7 +233,7 @@ type CreateFlinkV12ClusterRequest struct {
 	TaskManager        *TaskManagerV12      `json:"taskManager"`
 	JobManager         *JobManagerV12       `json:"jobManager"`
 	FlinkConfigRequest map[string]any       `json:"flinkConfigRequest"` // flink-conf.yaml 的具体配置，example：{"key":"key","value":"value"}
-	NodeSelector       map[string]any       `json:"nodeSelector"`       // {"env":"flink"}
+	// NodeSelector       map[string]any       `json:"nodeSelector"`       // {"env":"flink"}
 }
 
 // 主要组装 Name和 Size
@@ -489,8 +489,8 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 	yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"] = []map[string]any{jobContainer}
 
 	// nodeSelector 组装
-	if c.NodeSelector != nil {
-		yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["nodeSelector"] = c.NodeSelector
+	if c.JobManager.NodeSelector != nil {
+		yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["nodeSelector"] = c.JobManager.NodeSelector
 	}
 
 	// support sidecar
@@ -641,6 +641,8 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 	}
 
 	// nodeSelector 组装
-	yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["nodeSelector"] = c.NodeSelector
+	if c.TaskManager.NodeSelector != nil {
+		yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["nodeSelector"] = c.TaskManager.NodeSelector
+	}
 	return yaml
 }

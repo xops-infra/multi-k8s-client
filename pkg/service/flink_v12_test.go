@@ -37,15 +37,16 @@ func TestFlinkV12ClustertApply(t *testing.T) {
 			Labels:      map[string]string{"used-by": "ui"},
 		},
 		JobManager: &model.JobManagerV12{
-			PvcSize:  tea.Int(22),
-			Resource: &model.FlinkResource{Memory: tea.String("1Gi"), CPU: tea.String("1")},
+			PvcSize:      tea.Int(22),
+			Resource:     &model.FlinkResource{Memory: tea.String("1Gi"), CPU: tea.String("1")},
+			NodeSelector: &map[string]string{"kubernetes.io/os": "linux"},
 		},
 		TaskManager: &model.TaskManagerV12{
-			Nu:       tea.Int(2),
-			Resource: &model.FlinkResource{Memory: tea.String("2Gi"), CPU: tea.String("1")},
+			Nu:           tea.Int(2),
+			Resource:     &model.FlinkResource{Memory: tea.String("2Gi"), CPU: tea.String("1")},
+			NodeSelector: &map[string]string{"kubernetes.io/os": "linux"},
 		},
 		FlinkConfigRequest: map[string]any{"taskmanager.numberOfTaskSlots": 2},
-		NodeSelector:       map[string]any{"env": "flink"},
 	}
 
 	resp, err := k8s.FlinkV12ClustertApply("test", req)
