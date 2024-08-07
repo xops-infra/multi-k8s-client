@@ -37,7 +37,7 @@ type CrdFlinkDeployment struct {
 
 type CreateFlinkClusterRequest struct {
 	NameSpace          *string           `json:"namespace" default:"default"`
-	ClusterName        *string           `json:"cluster_name" binding:"required"` // metadata.name
+	ClusterName        *string           `json:"cluster_name" binding:"required"` // metadata.name，必须符合k8s标准不支持中文，下划线等
 	Image              *string           `json:"image" default:"flink:1.17"`
 	Version            *string           `json:"version" default:"v1_17"`
 	ServiceAccount     *string           `json:"service_account" default:"flink"`

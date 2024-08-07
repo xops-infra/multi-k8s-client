@@ -23,7 +23,7 @@ func NewK8SService(configs []model.Cluster) (model.K8SContract, error) {
 		if cluster.Alias == nil || cluster.Name == nil {
 			return nil, fmt.Errorf("cluster name or alias is nil")
 		}
-		ios[*cluster.Name] = newClient
+		ios[*cluster.Alias] = newClient
 	}
 	return &K8SService{
 		IOs: ios,
