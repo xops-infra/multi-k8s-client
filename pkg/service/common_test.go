@@ -211,3 +211,32 @@ func TestCrdSparkApplicationGet(t *testing.T) {
 	}
 	t.Log("Get SparkApplication success", tea.Prettify(resp.Spec))
 }
+
+// CrdFlinkDeploymentRestart
+func TestCrdFlinkDeploymentRestart(t *testing.T) {
+
+	req := model.RestartFlinkClusterRequest{
+		ClusterName: tea.String("flink-sync"),
+		NameSpace:   tea.String("flink"),
+		Type:        model.FlinkTypeTM,
+	}
+	err := k8s.CrdFlinkDeploymentRestart("test", req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("success")
+}
+
+// TEST CrdFlinkTMScale
+func TestCrdFlinkTMScale(t *testing.T) {
+	req := model.CrdFlinkTMScaleRequest{
+		ClusterName: tea.String("flink-sync"),
+		NameSpace:   tea.String("flink"),
+		Replicas:    tea.Int32(10),
+	}
+	err := k8s.CrdFlinkTMScale("test", req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("success")
+}
