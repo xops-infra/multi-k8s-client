@@ -416,3 +416,17 @@ type DeleteFlinkSessionJobRequest struct {
 	NameSpace   *string `json:"namespace" default:"default"`
 	JobName     *string `json:"job_name" binding:"required"`
 }
+
+type FlinkType string
+
+const (
+	FlinkTypeJM  FlinkType = "JM" // jobmanager
+	FlinkTypeTM  FlinkType = "TM" // taskmanager
+	FlinkTypeALL FlinkType = "ALL"
+)
+
+type RestartFlinkClusterRequest struct {
+	ClusterName *string   `json:"cluster_name" binding:"required"` // flink集群名称
+	NameSpace   *string   `json:"namespace" default:"default"`
+	Type        FlinkType `json:"type" binding:"required"` // JM/TM/ALL
+}

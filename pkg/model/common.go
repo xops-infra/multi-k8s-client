@@ -36,6 +36,8 @@ type K8SIO interface {
 	DeploymentApply(req ApplyDeploymentRequest) (any, error)
 	DeploymentCreate(dep *appv1.Deployment) (any, error)
 	DeploymentDelete(namespace, name string) error
+	DeploymentScale(namespace, name string, replicas int32) (any, error)
+	DeploymentRestart(namespace, name string) (any, error)
 
 	// SERVICE
 	ServiceList(filter Filter) (*podV1.ServiceList, error)
@@ -80,6 +82,7 @@ type K8SContract interface {
 	CrdFlinkSessionJobList(k8sClusterName string, filter Filter) (CrdFlinkSessionJobGetResponse, error)
 	CrdFlinkSessionJobSubmit(k8sClusterName string, req CreateFlinkSessionJobRequest) (any, error)
 	CrdFlinkSessionJobDelete(k8sClusterName string, req DeleteFlinkSessionJobRequest) error
+	CrdFlinkDeploymentRestart(k8sClusterName string, req RestartFlinkClusterRequest) error
 	// FlinkV1.12.7
 	FlinkV12ClusterList(k8sClusterName string, filter FilterFlinkV12) (CrdFlinkDeploymentGetResponse, error)
 	FlinkV12ClustertApply(k8sClusterName string, req CreateFlinkV12ClusterRequest) (CreateResponse, error)

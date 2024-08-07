@@ -23,7 +23,7 @@ func NewK8SService(configs []model.Cluster) (model.K8SContract, error) {
 		if cluster.Alias == nil || cluster.Name == nil {
 			return nil, fmt.Errorf("cluster name or alias is nil")
 		}
-		ios[*cluster.Alias] = newClient
+		ios[*cluster.Name] = newClient
 	}
 	return &K8SService{
 		IOs: ios,
@@ -36,6 +36,32 @@ func (s *K8SService) GetK8SCluster() []model.ClusterInfo {
 		clusterNames = append(clusterNames, v.GetClusterInfo())
 	}
 	return clusterNames
+}
+
+func (s *K8SService) CrdFlinkDeploymentRestart(k8sClusterName string, req model.RestartFlinkClusterRequest) error {
+	if io, ok := s.IOs[k8sClusterName]; ok {
+		var deploymentName []string
+		switch req.Type {
+		case model.FlinkTypeALL:
+			deploymentName = []string{fmt.Sprintf(model.TaskManagerDeploymentName, *req.ClusterName),
+				fmt.Sprintf(model.JobManagerDeploymentName, *req.ClusterName)}
+		case model.FlinkTypeJM:
+			deploymentName = []string{fmt.Sprintf(model.JobManagerDeploymentName, *req.ClusterName)}
+		case model.FlinkTypeTM:
+			deploymentName = []string{fmt.Sprintf(model.TaskManagerDeploymentName, *req.ClusterName)}
+		default:
+			return fmt.Errorf("type not found, only support ALL, TM, JM")
+		}
+		for _, name := range deploymentName {
+			_, err := io.DeploymentRestart(tea.StringValue(req.NameSpace), name)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+	return fmt.Errorf("cluster %s not found, available cluster: %v", k8sClusterName, tea.Prettify(s.GetK8SCluster()))
 }
 
 func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.Filter) (model.CrdFlinkDeploymentGetResponse, error) {
