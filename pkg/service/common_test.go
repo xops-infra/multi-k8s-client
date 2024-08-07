@@ -23,12 +23,12 @@ func init() {
 	_k8s, err := service.NewK8SService([]model.Cluster{
 		{
 			KubePath: tea.String("~/.kube/config"),
-			Name:     tea.String("test"),       // 集群名称
-			Alias:    tea.String("test_alias"), // 集群别名
+			Name:     tea.String("test"), // 集群名称
+			Alias:    tea.String("test"), // 集群别名
 		}, {
 			KubePath: tea.String("~/.kube/config"),
 			Name:     tea.String("testa"),
-			Alias:    tea.String("test_alias_a"),
+			Alias:    tea.String("testa"),
 		},
 	})
 	if err != nil {
