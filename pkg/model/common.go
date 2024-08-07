@@ -83,6 +83,7 @@ type K8SContract interface {
 	CrdFlinkSessionJobSubmit(k8sClusterName string, req CreateFlinkSessionJobRequest) (any, error)
 	CrdFlinkSessionJobDelete(k8sClusterName string, req DeleteFlinkSessionJobRequest) error
 	CrdFlinkDeploymentRestart(k8sClusterName string, req RestartFlinkClusterRequest) error
+	CrdFlinkTMScale(k8sClusterName string, req CrdFlinkTMScaleRequest) error
 	// FlinkV1.12.7
 	FlinkV12ClusterList(k8sClusterName string, filter FilterFlinkV12) (CrdFlinkDeploymentGetResponse, error)
 	FlinkV12ClustertApply(k8sClusterName string, req CreateFlinkV12ClusterRequest) (CreateResponse, error)

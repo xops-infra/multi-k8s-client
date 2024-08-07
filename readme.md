@@ -13,6 +13,7 @@ go get -u github.com/xops-infra/multi-k8s-client@main
 
 - 2024-08
 
+  - feat: 支持 CrdFlinkTMScale 调整 TM 数量
   - feat: 支持 FlinkDeploymentRestart 支持制定重启类型，JM/TM/ALL
 
 - 2024-07

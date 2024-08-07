@@ -430,3 +430,9 @@ type RestartFlinkClusterRequest struct {
 	NameSpace   *string   `json:"namespace" default:"default"`
 	Type        FlinkType `json:"type" binding:"required"` // JM/TM/ALL
 }
+
+type CrdFlinkTMScaleRequest struct {
+	ClusterName *string `json:"cluster_name" binding:"required"` // flink集群名称
+	NameSpace   *string `json:"namespace" default:"default"`
+	Replicas    *int32  `json:"replicas" binding:"required"` // 调整后的 TM 数量
+}

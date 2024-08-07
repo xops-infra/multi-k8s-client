@@ -38,6 +38,15 @@ func (s *K8SService) GetK8SCluster() []model.ClusterInfo {
 	return clusterNames
 }
 
+// 因为 JM 是单副本，所以支持的只有 TM副本调整
+func (s *K8SService) CrdFlinkTMScale(k8sClusterName string, req model.CrdFlinkTMScaleRequest) error {
+	if io, ok := s.IOs[k8sClusterName]; ok {
+		_, err := io.DeploymentScale(tea.StringValue(req.NameSpace), fmt.Sprintf(model.TaskManagerDeploymentName, *req.ClusterName), *req.Replicas)
+		return err
+	}
+	return fmt.Errorf("cluster %s not found, available cluster: %v", k8sClusterName, tea.Prettify(s.GetK8SCluster()))
+}
+
 func (s *K8SService) CrdFlinkDeploymentRestart(k8sClusterName string, req model.RestartFlinkClusterRequest) error {
 	if io, ok := s.IOs[k8sClusterName]; ok {
 		var deploymentName []string
