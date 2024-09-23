@@ -331,9 +331,9 @@ func (c *CreateFlinkV12ClusterRequest) NewConfigMap() ApplyConfigMapRequest {
 		"queryable-state.proxy.ports": 6125,
 		"parallelism.default":         1,
 
-		"taskmanager.numberOfTaskSlots":        2,
-		"taskmanager.memory.managed.size":      "24m",
-		"taskmanager.memory.process.size":      "3200m",
+		"taskmanager.numberOfTaskSlots":   2,
+		"taskmanager.memory.managed.size": "24m",
+		// "taskmanager.memory.process.size":      "3200m",
 		"jobmanager.memory.flink.size":         "2048m",
 		"jobmanager.memory.jvm-metaspace.size": "2048m",
 		"web.upload.dir":                       "/opt/flink/target",
