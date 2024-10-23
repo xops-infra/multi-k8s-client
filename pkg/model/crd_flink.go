@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/spf13/cast"
 )
 
 type CrdFlinkSessionJobGetResponse struct {
@@ -265,7 +266,12 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	}
 	if req.TaskManager != nil {
 		if req.TaskManager.Resource != nil {
-			yaml["spec"].(map[string]interface{})["taskManager"].(map[string]interface{})["resource"] = req.TaskManager.Resource
+			// 转换cpu 的 str到这里 int类型
+			cpu := cast.ToInt(*req.JobManager.Resource.CPU)
+			yaml["spec"].(map[string]interface{})["taskManager"].(map[string]interface{})["resource"] = map[string]interface{}{
+				"memory": req.JobManager.Resource.Memory,
+				"cpu":    cpu,
+			}
 		}
 		if req.TaskManager.NodeSelector != nil {
 			yaml["spec"].(map[string]interface{})["taskManager"].(map[string]interface{})["podTemplate"] = map[string]interface{}{
@@ -281,7 +287,12 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	}
 	if req.JobManager != nil {
 		if req.JobManager.Resource != nil {
-			yaml["spec"].(map[string]interface{})["jobManager"].(map[string]interface{})["resource"] = req.JobManager.Resource
+			// 转换cpu 的 str到这里 int类型
+			cpu := cast.ToInt(*req.JobManager.Resource.CPU)
+			yaml["spec"].(map[string]interface{})["jobManager"].(map[string]interface{})["resource"] = map[string]interface{}{
+				"memory": req.JobManager.Resource.Memory,
+				"cpu":    cpu,
+			}
 		}
 		if req.JobManager.NodeSelector != nil {
 			yaml["spec"].(map[string]interface{})["jobManager"].(map[string]interface{})["podTemplate"] = map[string]interface{}{
