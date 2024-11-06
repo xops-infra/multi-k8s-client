@@ -289,7 +289,7 @@ func TestServiceApply(t *testing.T) {
 	req := model.ApplyServiceRequest{
 		Name:      tea.String("demo-service"),
 		Namespace: tea.String("default"),
-		Label:     map[string]string{"app": "demo-service", "owner": "demo"},
+		Labels:    map[string]string{"app": "demo-service", "owner": "demo"},
 		Spec: &model.ServiceSpec{
 			Type:     tea.String("ClusterIP"),
 			Selector: map[string]string{"app": "demo-service"},

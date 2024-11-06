@@ -11,6 +11,10 @@ go get -u github.com/xops-infra/multi-k8s-client@main
 
 ### 更新日志
 
+- 2024-11
+
+  - feat: 支持 Flink operator 方式自动创建 LB service，查询；
+
 - 2024-08
 
   - feat: 支持 CrdFlinkTMScale 调整 TM 数量
