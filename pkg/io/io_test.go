@@ -123,7 +123,7 @@ func TestCrdFlinkDeploymentApplyPyFlinkApplication(t *testing.T) {
 		ClusterName: tea.String("flink-application-aiops-5"),
 		Image:       tea.String("xxx.tencentcloudcr.com/ops/ops-flink:flink-0.0.3"),
 		Version:     tea.String("v1_19"),
-		Labels:      map[string]string{"owner": "zhongjunyi"},
+		Labels:      map[string]string{"test": "test"},
 		Job: &model.Job{
 			JarURI:      tea.String("local:///opt/flink/opt/flink-python_2.12-1.16.1.jar"),
 			Parallelism: tea.Int32(1),
@@ -144,6 +144,7 @@ func TestCrdFlinkDeploymentApplyPyFlinkApplication(t *testing.T) {
 				"env": "flink",
 			},
 		},
+		Submitter: tea.String("zhoushoujian"),
 	}
 	t.Logf("req: %v", tea.Prettify(req.ToYaml()))
 	resp, err := client.CrdFlinkDeploymentApply(req.ToYaml())

@@ -315,10 +315,10 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	if req.Labels != nil {
 		yaml["metadata"].(map[string]interface{})["labels"] = req.Labels
 	} else {
-		yaml["metadata"].(map[string]interface{})["labels"] = map[string]interface{}{}
+		yaml["metadata"].(map[string]interface{})["labels"] = map[string]string{}
 	}
 	if req.Submitter != nil {
-		yaml["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["owner"] = *req.Submitter
+		yaml["metadata"].(map[string]interface{})["labels"].(map[string]string)["owner"] = *req.Submitter
 	}
 
 	return yaml
