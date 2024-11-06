@@ -1,6 +1,9 @@
 package model
 
 import (
+	"fmt"
+	"math/rand"
+
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/spf13/cast"
 )
@@ -29,27 +32,94 @@ type CrdFlinkDeploymentGetResponse struct {
 }
 
 type CrdFlinkDeployment struct {
-	ClusterName string            `json:"cluster_name"`
-	NameSpace   string            `json:"namespace"`
-	Labels      map[string]string `json:"labels"`
-	Status      any               `json:"status"`     // 集群状态信息
-	Annotation  any               `json:"annotation"` // 集群描述信息
+	ClusterName  string            `json:"cluster_name"`
+	NameSpace    string            `json:"namespace"`
+	Labels       map[string]string `json:"labels"`
+	Status       any               `json:"status"`       // 集群状态信息
+	Annotation   any               `json:"annotation"`   // 集群描述信息
+	LoadBalancer any               `json:"loadBalancer"` // 如果创建的时候带了，这里可以查询信息
 }
 
 type CreateFlinkClusterRequest struct {
-	NameSpace          *string           `json:"namespace" default:"default"`
-	ClusterName        *string           `json:"cluster_name" binding:"required"` // metadata.name，必须符合k8s标准不支持中文，下划线等
-	Image              *string           `json:"image" default:"flink:1.17"`
-	Version            *string           `json:"version" default:"v1_17"`
-	ServiceAccount     *string           `json:"service_account" default:"flink"`
-	FlinkConfiguration map[string]any    `json:"flink_configuration"`              // flink配置,键值对的方式比如: {"taskmanager.numberOfTaskSlots": "2"}
-	EnableFluentit     *bool             `json:"enable_fluentbit" default:"false"` // sidecar fluentbit
-	Env                []Env             `json:"env"`                              // 环境变量,同时给JM和TM设置环境变量
-	TaskManager        *Manager          `json:"task_manager"`
-	JobManager         *Manager          `json:"job_manager"`
-	Job                *Job              `json:"job"`       // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
-	Submitter          *string           `json:"submitter"` // 提交人
-	Labels             map[string]string `json:"labels"`    // 自定义标签
+	NameSpace          *string              `json:"namespace" default:"default"`
+	ClusterName        *string              `json:"cluster_name" binding:"required"` // metadata.name，必须符合k8s标准不支持中文，下划线等
+	Image              *string              `json:"image" default:"flink:1.17"`
+	Version            *string              `json:"version" default:"v1_17"`
+	ServiceAccount     *string              `json:"service_account" default:"flink"`
+	FlinkConfiguration map[string]any       `json:"flink_configuration"`              // flink配置,键值对的方式比如: {"taskmanager.numberOfTaskSlots": "2"}
+	EnableFluentit     *bool                `json:"enable_fluentbit" default:"false"` // sidecar fluentbit
+	Env                []Env                `json:"env"`                              // 环境变量,同时给JM和TM设置环境变量
+	TaskManager        *Manager             `json:"task_manager"`
+	JobManager         *Manager             `json:"job_manager"`
+	Job                *Job                 `json:"job"`          // 如果没有该字段则创建 Session集群，如果有该字段则创建Application集群。
+	Submitter          *string              `json:"submitter"`    // 提交人
+	Labels             map[string]string    `json:"labels"`       // 自定义标签
+	LoadBalancer       *LoadBalancerRequest `json:"loadBalancer"` // 配置相关 annotations启用云主机负载均衡,nil不会启用
+}
+
+/*
+kind: Service
+apiVersion: v1
+metadata:
+
+	name: flink-application-aiops-1-rest
+	namespace: flink
+	uid: 7b877cf1-112e-4d97-b2d9-b2b058b7f47c
+	resourceVersion: '15803757841'
+	creationTimestamp: '2024-11-06T07:46:17Z'
+	labels:
+	  app: flink-application-aiops-1
+	  type: flink-native-kubernetes
+
+spec:
+
+	ports:
+	  - name: rest
+	    protocol: TCP
+	    port: 8081
+	    targetPort: 8081
+	selector:
+	  app: flink-application-aiops-1
+	  component: jobmanager
+	  type: flink-native-kubernetes
+*/
+func (c *CreateFlinkClusterRequest) NewLBService() ApplyServiceRequest {
+	// 随机生成30000-32767端口
+	min := 30000
+	max := 32767
+	randPort := rand.Intn(max-min+1) + min
+
+	req := ApplyServiceRequest{
+		Name:      tea.String(fmt.Sprintf(JobManagerLBServiceName, *c.ClusterName)),
+		Namespace: c.NameSpace,
+		Spec: &ServiceSpec{
+			Selector: map[string]string{"app": *c.ClusterName, "component": "jobmanager", "type": "flink-native-kubernetes"},
+			Ports: []Port{
+				{
+					Name:       tea.String("rest"),
+					Protocol:   tea.String("TCP"),
+					Port:       tea.Int32(int32(randPort)),
+					TargetPort: tea.Int32(8081),
+					NodePort:   tea.Int32(int32(randPort)),
+				},
+			},
+			Type: tea.String("LoadBalancer"),
+		},
+	}
+
+	if c.LoadBalancer != nil {
+		req.Annotations = c.LoadBalancer.Annotations
+		if c.LoadBalancer.Labels != nil {
+			req.Labels = c.LoadBalancer.Labels
+		}
+	}
+	if c.Submitter != nil {
+		if req.Labels == nil {
+			req.Labels = map[string]string{}
+		}
+		req.Labels["owner"] = *c.Submitter
+	}
+	return req
 }
 
 type Env struct {
@@ -315,10 +385,10 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	if req.Labels != nil {
 		yaml["metadata"].(map[string]interface{})["labels"] = req.Labels
 	} else {
-		yaml["metadata"].(map[string]interface{})["labels"] = map[string]interface{}{}
+		yaml["metadata"].(map[string]interface{})["labels"] = map[string]string{}
 	}
 	if req.Submitter != nil {
-		yaml["metadata"].(map[string]interface{})["labels"].(map[string]interface{})["owner"] = *req.Submitter
+		yaml["metadata"].(map[string]interface{})["labels"].(map[string]string)["owner"] = *req.Submitter
 	}
 
 	return yaml

@@ -27,7 +27,7 @@ type ApplyServiceRequest struct {
 	Namespace   *string           `json:"namespace"`
 	Name        *string           `json:"name" binding:"required"`
 	Spec        *ServiceSpec      `json:"spec" binding:"required"`
-	Label       map[string]string `json:"label"`
+	Labels      map[string]string `json:"label"`
 	Annotations map[string]string `json:"annotations"`
 }
 
@@ -72,8 +72,8 @@ func (req *ApplyServiceRequest) NewService() (*corev1.ServiceApplyConfiguration,
 		yaml.Spec.Selector = req.Spec.Selector
 	}
 	// metadata
-	if req.Label != nil {
-		yaml.Labels = req.Label
+	if req.Labels != nil {
+		yaml.Labels = req.Labels
 	}
 	if req.Annotations != nil {
 		yaml.Annotations = req.Annotations

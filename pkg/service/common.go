@@ -82,13 +82,27 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 		var items []model.CrdFlinkDeployment
 		for _, item := range resp.Items {
 			// fmt.Println(tea.Prettify(item.Object))
-			items = append(items, model.CrdFlinkDeployment{
+			// 增加 LoadBlance 连接信息
+			lbResp, err := io.ServiceList(model.Filter{
+				NameSpace:     tea.String(item.GetNamespace()),
+				FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s", fmt.Sprintf(model.JobManagerLBServiceName, item.GetName()))), // app-session-jobmanager-lb-service
+			})
+			if err != nil {
+				return model.CrdFlinkDeploymentGetResponse{}, err
+			}
+			v := model.CrdFlinkDeployment{
 				ClusterName: item.GetName(),
 				NameSpace:   item.GetNamespace(),
 				Labels:      item.GetLabels(),
 				Status:      item.Object["status"].(map[string]any),
 				Annotation:  item.GetAnnotations(),
-			})
+			}
+			for k, item := range lbResp.Items {
+				v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
+				v.LoadBalancer.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
+			}
+
+			items = append(items, v)
 		}
 		return model.CrdFlinkDeploymentGetResponse{
 			Total: len(resp.Items),
@@ -100,14 +114,22 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 
 func (s *K8SService) CrdFlinkDeploymentApply(k8sCluster string, req model.CreateFlinkClusterRequest) (model.CreateResponse, error) {
 	if io, ok := s.IOs[k8sCluster]; ok {
-		resp, err := io.CrdFlinkDeploymentApply(req.ToYaml())
+		var response model.CreateResponse
+		_, err := io.CrdFlinkDeploymentApply(req.ToYaml())
 		if err != nil {
 			return model.CreateResponse{}, err
 		}
-		return model.CreateResponse{
-			Result: resp,
-			Info:   fmt.Sprintf("\nsuccess\tkubectl port-forward svc/%s-rest 8081", *req.ClusterName),
-		}, nil
+		response.Info = "create FlinkDeployment success!"
+		if req.LoadBalancer != nil {
+			// 创建 loadbalancer
+			LBServiceYaml := req.NewLBService()
+			_, err := io.ServiceApply(LBServiceYaml)
+			if err != nil {
+				return model.CreateResponse{}, err
+			}
+			response.Info += " create LoadBalancer success!"
+		}
+		return response, nil
 	}
 	return model.CreateResponse{}, fmt.Errorf("cluster not found")
 }
