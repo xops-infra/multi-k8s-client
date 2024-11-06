@@ -119,9 +119,10 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 func TestCrdFlinkDeploymentDelete(t *testing.T) {
 
 	req := model.DeleteFlinkClusterRequest{
-		ClusterName: tea.String("flink-application-13-csdtr8"),
+		ClusterName: tea.String("ops-aiops-application-2"),
+		NameSpace:   tea.String("flink"),
 	}
-	err := k8s.CrdFlinkDeploymentDelete("dev", req)
+	err := k8s.CrdFlinkDeploymentDelete("test", req)
 	if err != nil {
 		t.Fatal(err)
 	}
