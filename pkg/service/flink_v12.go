@@ -57,7 +57,8 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 				Status: map[string]any{
 					item.GetName(): item.Status,
 				},
-				Labels: item.GetLabels(), // 集群创建时的标签都一样这里就取第一个
+				Labels:       item.GetLabels(), // 集群创建时的标签都一样这里就取第一个
+				LoadBalancer: map[string]any{},
 			}
 			clusterMap[clustername] = clusterItem
 		}
