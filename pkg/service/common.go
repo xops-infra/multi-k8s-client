@@ -136,7 +136,15 @@ func (s *K8SService) CrdFlinkDeploymentApply(k8sCluster string, req model.Create
 
 func (s *K8SService) CrdFlinkDeploymentDelete(k8sClusterName string, req model.DeleteFlinkClusterRequest) error {
 	if io, ok := s.IOs[k8sClusterName]; ok {
-		return io.CrdFlinkDeploymentDelete(tea.StringValue(req.NameSpace), *req.ClusterName)
+		// 删除 deployment,如果存在 LB 也一起删掉
+		err := io.CrdFlinkDeploymentDelete(tea.StringValue(req.NameSpace), *req.ClusterName)
+		if err != nil {
+			return err
+		}
+		// 删除 service
+		io.ServiceDelete(tea.StringValue(req.NameSpace), fmt.Sprintf(model.JobManagerLBServiceName, *req.ClusterName))
+
+		return nil
 	}
 	return fmt.Errorf("cluster not found")
 }

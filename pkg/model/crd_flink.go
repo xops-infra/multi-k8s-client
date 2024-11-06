@@ -118,6 +118,7 @@ func (c *CreateFlinkClusterRequest) NewLBService() ApplyServiceRequest {
 			req.Labels = map[string]string{}
 		}
 		req.Labels["owner"] = *c.Submitter
+		req.Labels["app"] = *c.ClusterName
 	}
 	return req
 }
