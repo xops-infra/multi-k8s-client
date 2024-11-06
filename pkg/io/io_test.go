@@ -17,6 +17,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	// 获取当前配置文件的集群
 	client, err = io.NewK8SClient(model.Cluster{
 		KubePath: tea.String("~/.kube/config"),
 	})
@@ -107,6 +108,44 @@ func TestCrdFlinkDeploymentApplySession(t *testing.T) {
 		ClusterName: tea.String("session-cluster"),
 	}
 
+	resp, err := client.CrdFlinkDeploymentApply(req.ToYaml())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Start FlinkSession success", resp)
+	// kubectl port-forward svc/session-cluster-rest 8081
+}
+
+// FlinkSession Create
+func TestCrdFlinkDeploymentApplyPyFlinkApplication(t *testing.T) {
+	req := model.CreateFlinkClusterRequest{
+		NameSpace:   tea.String("flink"),
+		ClusterName: tea.String("flink-application-aiops-5"),
+		Image:       tea.String("xxx.tencentcloudcr.com/ops/ops-flink:flink-0.0.3"),
+		Version:     tea.String("v1_19"),
+		Labels:      map[string]string{"owner": "zhongjunyi"},
+		Job: &model.Job{
+			JarURI:      tea.String("local:///opt/flink/opt/flink-python_2.12-1.16.1.jar"),
+			Parallelism: tea.Int32(1),
+			EntryClass:  tea.String("org.apache.flink.client.python.PythonDriver"),
+			Args: []string{
+				"-pyclientexec", "python", "-py", "/opt/flink/usrlib/python_demo.py",
+			},
+		},
+		TaskManager: &model.Manager{
+			Resource: &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("1")},
+			NodeSelector: &map[string]string{
+				"env": "flink",
+			},
+		},
+		JobManager: &model.Manager{
+			Resource: &model.FlinkResource{Memory: tea.String("2048m"), CPU: tea.String("100m")},
+			NodeSelector: &map[string]string{
+				"env": "flink",
+			},
+		},
+	}
+	t.Logf("req: %v", tea.Prettify(req.ToYaml()))
 	resp, err := client.CrdFlinkDeploymentApply(req.ToYaml())
 	if err != nil {
 		t.Fatal(err)
