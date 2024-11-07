@@ -91,11 +91,12 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 				return model.CrdFlinkDeploymentGetResponse{}, err
 			}
 			v := model.CrdFlinkDeployment{
-				ClusterName: item.GetName(),
-				NameSpace:   item.GetNamespace(),
-				Labels:      item.GetLabels(),
-				Status:      item.Object["status"].(map[string]any),
-				Annotation:  item.GetAnnotations(),
+				ClusterName:  item.GetName(),
+				NameSpace:    item.GetNamespace(),
+				Labels:       item.GetLabels(),
+				Status:       item.Object["status"].(map[string]any),
+				Annotation:   item.GetAnnotations(),
+				LoadBalancer: map[string]any{},
 			}
 			for k, item := range lbResp.Items {
 				v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
