@@ -312,6 +312,9 @@ func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
 		req.Labels = c.LoadBalancer.Labels
 		req.Annotations = c.LoadBalancer.Annotations
 	}
+	if c.Owner != nil {
+		req.Labels = map[string]string{"owner": *c.Owner, "app": *c.Name}
+	}
 	return req
 }
 
