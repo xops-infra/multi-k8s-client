@@ -3,9 +3,12 @@ package model
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/spf13/cast"
+	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type CrdFlinkSessionJobGetResponse struct {
@@ -38,6 +41,7 @@ type CrdFlinkDeployment struct {
 	Status       any               `json:"status"`       // 集群状态信息
 	Annotation   any               `json:"annotation"`   // 集群描述信息
 	LoadBalancer any               `json:"loadBalancer"` // 如果创建的时候带了，这里可以查询信息
+	Info         map[string]string `json:"info"`         // 集群额外信息，比如集群版本，启动时间，副本数量，cpu、内存等信息
 }
 
 type CreateFlinkClusterRequest struct {
@@ -517,4 +521,53 @@ type CrdFlinkTMScaleRequest struct {
 	ClusterName *string `json:"cluster_name" binding:"required"` // flink集群名称
 	NameSpace   *string `json:"namespace" default:"default"`
 	Replicas    *int32  `json:"replicas" binding:"required"` // 调整后的 TM 数量
+}
+
+// 获取创建时间，replicas，更新时间
+func GetInfoFromItem(item unstructured.Unstructured) map[string]string {
+	data := make(map[string]string, 0)
+	for k, v := range item.GetLabels() {
+		data[k] = v
+	}
+	data["create_time"] = item.GetCreationTimestamp().Local().Format("2006-01-02 15:04:05")
+	if r, ok := item.Object["spec"].(map[string]any)["replicas"]; ok {
+		data["replicas"] = fmt.Sprintf("%v", r)
+	}
+	if item.Object["spec"].(map[string]any)["template"] != nil {
+		images := ""
+		for _, v := range item.Object["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"].([]any) {
+			images = fmt.Sprintf("%s,%s", images, v.(map[string]any)["image"])
+		}
+		data["images"] = strings.Trim(images, ",")
+	}
+
+	// get flink version
+	if item.Object["spec"].(map[string]any)["flinkVersion"] != nil {
+		data["flink_version"] = item.Object["spec"].(map[string]any)["flinkVersion"].(string)
+	}
+
+	return data
+}
+
+func GetInfoFromDeployment(item v1.Deployment) map[string]string {
+	data := make(map[string]string, 0)
+	data["create_time"] = item.GetCreationTimestamp().Local().Format("2006-01-02 15:04:05")
+	data["replicas"] = fmt.Sprintf("%d", tea.Int32Value(item.Spec.Replicas))
+	for k, v := range item.Labels {
+		data[k] = v
+	}
+	images := ""
+	for _, v := range item.Spec.Template.Spec.Containers {
+		images = fmt.Sprintf("%s,%s", images, v.Image)
+	}
+	data["images"] = strings.Trim(images, ",")
+
+	// get flink version from image tag
+	for _, v := range item.Spec.Template.Spec.Containers {
+		if strings.Contains(v.Image, "flink") {
+			data["flink_version"] = strings.Split(v.Image, ":")[1]
+			break
+		}
+	}
+	return data
 }

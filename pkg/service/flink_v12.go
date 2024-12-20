@@ -31,20 +31,29 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 		clusterMap := make(map[string]model.CrdFlinkDeployment)
 		for _, item := range resp.Items {
 			// 创建的集群规则特这是带有 -jobmanager 或者 -taskmanager 的 deployment
-			var clustername string
+			var clustername, flinkType string
 			if strings.HasSuffix(item.GetName(), "-jobmanager") {
 				clustername = strings.TrimSuffix(item.GetName(), "-jobmanager")
+				flinkType = "jobmanager"
 			} else if strings.HasSuffix(item.GetName(), "-taskmanager") {
 				clustername = strings.TrimSuffix(item.GetName(), "-taskmanager")
+				flinkType = "taskmanager"
 			}
 			if clustername == "" {
 				continue
 			}
 
-			if _, ok := clusterMap[clustername]; ok {
-				// 已经存在的集群 丰富数据
-				clusterMap[clustername].Status.(map[string]any)[item.GetName()] = item.Status
-				clusterMap[clustername].Annotation.(map[string]any)[item.GetName()] = item.GetAnnotations()
+			// 获取 deployment 类型
+			if c, ok := clusterMap[clustername]; ok {
+				// 已经存在的集群，因为有 2 种 deployment, 丰富数据
+				c.Status.(map[string]any)[flinkType] = item.Status
+				c.Annotation.(map[string]any)[flinkType] = item.GetAnnotations()
+				if flinkType == "taskmanager" {
+					// 只记录 taskmanager 配置信息
+					for k, v := range model.GetInfoFromDeployment(item) {
+						c.Info[k] = v
+					}
+				}
 				continue
 			}
 			// TODO: 增加 configmap配置信息
@@ -52,13 +61,14 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 				NameSpace:   item.GetNamespace(),
 				ClusterName: clustername,
 				Annotation: map[string]any{
-					item.GetName(): item.GetAnnotations(),
+					flinkType: item.GetAnnotations(),
 				},
 				Status: map[string]any{
-					item.GetName(): item.Status,
+					flinkType: item.Status,
 				},
 				Labels:       item.GetLabels(), // 集群创建时的标签都一样这里就取第一个
 				LoadBalancer: map[string]any{},
+				Info:         map[string]string{},
 			}
 			clusterMap[clustername] = clusterItem
 		}

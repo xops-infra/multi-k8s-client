@@ -97,9 +97,10 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 				Status:       item.Object["status"].(map[string]any),
 				Annotation:   item.GetAnnotations(),
 				LoadBalancer: map[string]any{},
+				Info:         model.GetInfoFromItem(item),
 			}
 			for k, item := range lbResp.Items {
-				v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
+				v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port) // 可以去掉，兼容需要保留
 				v.LoadBalancer.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
 			}
 
