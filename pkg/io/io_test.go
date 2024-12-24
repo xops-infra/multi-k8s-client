@@ -77,7 +77,7 @@ func TestCrdFlinkDeploymentList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("List FlinkDeployment success", tea.Prettify(len(resp.Items)))
+	t.Log("List FlinkDeployment success", tea.Prettify((resp.Items)))
 
 }
 

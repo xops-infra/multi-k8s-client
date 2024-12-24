@@ -43,6 +43,7 @@ type CrdFlinkDeployment struct {
 	Annotation   any                    `json:"annotation"`   // 集群描述信息
 	LoadBalancer map[string]string      `json:"loadBalancer"` // 如果创建的时候带了，这里可以查询信息
 	Info         CrdFlinkDeploymentInfo `json:"info"`         // 集群额外信息，比如集群版本，启动时间，副本数量，cpu、内存等信息
+	FlinkConfig  map[string]any         `json:"flink_config"` // flink Operator 的值是可以是数字比如 slot的数量	 低版本在 k8sconfig 是 string方式
 }
 
 // 在 label里面获取 owner
@@ -619,7 +620,14 @@ func GetInfoFromItem(item unstructured.Unstructured) CrdFlinkDeploymentInfo {
 	return data
 }
 
-func GetInfoFromDeployment(item v1.Deployment) CrdFlinkDeploymentInfo {
+func GetFlinkConfigFromItem(item unstructured.Unstructured) map[string]any {
+	if config, ok := item.Object["spec"].(map[string]any)["flinkConfiguration"]; ok {
+		return config.(map[string]any)
+	}
+	return nil
+}
+
+func GetInfoFromDeploymentForV12(item v1.Deployment) CrdFlinkDeploymentInfo {
 	data := make(map[string]string, 0)
 	data["create_time"] = item.GetCreationTimestamp().Local().Format("2006-01-02 15:04:05")
 	data["replicas"] = fmt.Sprintf("%d", tea.Int32Value(item.Spec.Replicas))

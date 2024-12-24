@@ -82,14 +82,6 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 		var items []model.CrdFlinkDeployment
 		for _, item := range resp.Items {
 			// fmt.Println(tea.Prettify(item.Object))
-			// 增加 LoadBlance 连接信息
-			lbResp, err := io.ServiceList(model.Filter{
-				NameSpace:     tea.String(item.GetNamespace()),
-				FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s", fmt.Sprintf(model.JobManagerLBServiceName, item.GetName()))), // app-session-jobmanager-lb-service
-			})
-			if err != nil {
-				return model.CrdFlinkDeploymentGetResponse{}, err
-			}
 			v := model.CrdFlinkDeployment{
 				ClusterName:  item.GetName(),
 				NameSpace:    item.GetNamespace(),
@@ -98,6 +90,15 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 				Annotation:   item.GetAnnotations(),
 				LoadBalancer: map[string]string{},
 				Info:         model.GetInfoFromItem(item),
+				FlinkConfig:  model.GetFlinkConfigFromItem(item),
+			}
+			// 增加 LoadBlance 连接信息
+			lbResp, err := io.ServiceList(model.Filter{
+				NameSpace:     tea.String(item.GetNamespace()),
+				FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s", fmt.Sprintf(model.JobManagerLBServiceName, item.GetName()))), // app-session-jobmanager-lb-service
+			})
+			if err != nil {
+				return model.CrdFlinkDeploymentGetResponse{}, err
 			}
 			for k, item := range lbResp.Items {
 				v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port) // 可以去掉，兼容需要保留

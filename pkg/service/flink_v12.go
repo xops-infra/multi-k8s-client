@@ -50,13 +50,13 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 				c.Annotation.(map[string]any)[flinkType] = item.GetAnnotations()
 				if flinkType == "taskmanager" {
 					// 只记录 taskmanager 配置信息
-					for k, v := range model.GetInfoFromDeployment(item) {
+					for k, v := range model.GetInfoFromDeploymentForV12(item) {
 						c.Info[k] = v
 					}
 				}
 				continue
 			}
-			// TODO: 增加 configmap配置信息
+
 			var clusterItem = model.CrdFlinkDeployment{
 				NameSpace:   item.GetNamespace(),
 				ClusterName: clustername,
@@ -76,6 +76,30 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 		// 转换
 		items := make([]model.CrdFlinkDeployment, 0)
 		for _, v := range clusterMap {
+			flinkconfig := make(map[string]any, 0)
+			// 获取 flink configmap 内容
+			fmt.Println("------------get ", fmt.Sprintf(model.ConfigMapV12Name, v.ClusterName))
+			flinkConfigs, err := io.ConfigMapList(model.Filter{
+				NameSpace:     filter.NameSpace,
+				LabelSelector: tea.String(fmt.Sprintf("app=%s", v.ClusterName)),
+				// FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s", fmt.Sprintf(model.ConfigMapV12Name, v.ClusterName))),
+			})
+			if err != nil {
+				return model.CrdFlinkDeploymentGetResponse{}, fmt.Errorf("get flink v12 configmap error: %v", err)
+			}
+			for _, cv := range flinkConfigs.Items {
+				// 提取 flink-conf.yaml key 内容
+				if d, ok := cv.Data["flink-conf.yaml"]; ok {
+					_flinkconfig, err := model.ConvertYamlToMap(d)
+					if err != nil {
+						return model.CrdFlinkDeploymentGetResponse{}, fmt.Errorf("get flink v12 configmap error: %v", err)
+					}
+					flinkconfig = _flinkconfig
+					break
+				}
+			}
+			v.FlinkConfig = flinkconfig
+
 			// 增加 LoadBlance 连接信息
 			lbResp, err := io.ServiceList(model.Filter{
 				NameSpace:     tea.String(v.NameSpace),

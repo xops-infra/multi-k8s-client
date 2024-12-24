@@ -88,6 +88,7 @@ type K8SContract interface {
 	FlinkV12ClusterList(k8sClusterName string, filter FilterFlinkV12) (CrdFlinkDeploymentGetResponse, error)
 	FlinkV12ClustertApply(k8sClusterName string, req CreateFlinkV12ClusterRequest) (CreateResponse, error)
 	FlinkV12ClusterDelete(k8sClusterName string, req DeleteFlinkClusterRequest) error
+	// FlinkV12ClusterGetConfig(k8sClusterName string) (map[string]string, error)
 
 	// Spark
 	CrdSparkApplicationList(k8sClusterName string, filter Filter) (CrdSparkApplicationGetResponse, error)

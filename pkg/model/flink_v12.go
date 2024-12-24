@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
 	"gopkg.in/yaml.v2"
@@ -655,4 +656,17 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 		yaml["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["nodeSelector"] = c.TaskManager.NodeSelector
 	}
 	return yaml
+}
+
+// flink在 configmap中的配置为\n换行 : 间隔的 kv
+func ConvertYamlToMap(data string) (map[string]any, error) {
+	result := make(map[string]any, 0)
+	dataArry := strings.Split(data, "\n")
+	for _, v := range dataArry {
+		if strings.Contains(v, ":") {
+			kv := strings.Split(v, ":")
+			result[kv[0]] = kv[1]
+		}
+	}
+	return result, nil
 }
