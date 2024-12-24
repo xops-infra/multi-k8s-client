@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/spf13/cast"
@@ -35,13 +36,82 @@ type CrdFlinkDeploymentGetResponse struct {
 }
 
 type CrdFlinkDeployment struct {
-	ClusterName  string            `json:"cluster_name"`
-	NameSpace    string            `json:"namespace"`
-	Labels       map[string]string `json:"labels"`
-	Status       any               `json:"status"`       // 集群状态信息
-	Annotation   any               `json:"annotation"`   // 集群描述信息
-	LoadBalancer any               `json:"loadBalancer"` // 如果创建的时候带了，这里可以查询信息
-	Info         map[string]string `json:"info"`         // 集群额外信息，比如集群版本，启动时间，副本数量，cpu、内存等信息
+	ClusterName  string                 `json:"cluster_name"`
+	NameSpace    string                 `json:"namespace"`
+	Labels       map[string]string      `json:"labels"`
+	Status       any                    `json:"status"`       // 集群状态信息
+	Annotation   any                    `json:"annotation"`   // 集群描述信息
+	LoadBalancer map[string]string      `json:"loadBalancer"` // 如果创建的时候带了，这里可以查询信息
+	Info         CrdFlinkDeploymentInfo `json:"info"`         // 集群额外信息，比如集群版本，启动时间，副本数量，cpu、内存等信息
+}
+
+// 在 label里面获取 owner
+func (s *CrdFlinkDeployment) GetOwner() (string, error) {
+	if labels, ok := s.Labels["owner"]; ok {
+		return labels, nil
+	}
+	return "", fmt.Errorf("labels.owner not found")
+}
+
+// GetWebUrl 自己 Loadbalancer里面获取的
+func (s *CrdFlinkDeployment) GetWebUrl() (string, error) {
+	var webUrl string
+	for _, v := range s.LoadBalancer {
+		webUrl = fmt.Sprintf("%s,%s", webUrl, v)
+	}
+	webUrl = strings.Trim(webUrl, ",")
+	if webUrl != "" {
+		return webUrl, nil
+	}
+	return "", fmt.Errorf("loadBalancer not found")
+}
+
+type CrdFlinkDeploymentInfo map[string]string
+
+func (s *CrdFlinkDeploymentInfo) Get(key string) string {
+	if _, ok := (*s)[key]; ok {
+		return (*s)[key]
+	}
+	return ""
+}
+
+func (s *CrdFlinkDeploymentInfo) GetOk(key string) (string, bool) {
+	if _, ok := (*s)[key]; ok {
+		return (*s)[key], true
+	}
+	return "", false
+}
+
+// create_time Format("2006-01-02 15:04:05")
+func (s *CrdFlinkDeploymentInfo) GetCreateTime() (time.Time, error) {
+	if createTime, ok := s.GetOk("create_time"); ok {
+		return time.Parse("2006-01-02 15:04:05", createTime)
+	}
+	return time.Time{}, fmt.Errorf("create_time not found")
+}
+
+// getRunTime
+func (s *CrdFlinkDeploymentInfo) GetRunTime() (time.Duration, error) {
+	createTime, err := s.GetCreateTime()
+	if err != nil {
+		return 0, err
+	}
+	return time.Since(createTime), nil
+}
+
+func (s *CrdFlinkDeploymentInfo) GetReplicas() (int32, error) {
+	if replicas, ok := s.GetOk("replicas"); ok {
+		return cast.ToInt32(replicas), nil
+	}
+	return 0, fmt.Errorf("replicas not found")
+}
+
+// images is string image with ,
+func (s *CrdFlinkDeploymentInfo) GetImages() (string, error) {
+	if images, ok := s.GetOk("images"); ok {
+		return images, nil
+	}
+	return "", fmt.Errorf("images not found")
 }
 
 type CreateFlinkClusterRequest struct {
@@ -524,7 +594,7 @@ type CrdFlinkTMScaleRequest struct {
 }
 
 // 获取创建时间，replicas，更新时间
-func GetInfoFromItem(item unstructured.Unstructured) map[string]string {
+func GetInfoFromItem(item unstructured.Unstructured) CrdFlinkDeploymentInfo {
 	data := make(map[string]string, 0)
 	for k, v := range item.GetLabels() {
 		data[k] = v
@@ -549,7 +619,7 @@ func GetInfoFromItem(item unstructured.Unstructured) map[string]string {
 	return data
 }
 
-func GetInfoFromDeployment(item v1.Deployment) map[string]string {
+func GetInfoFromDeployment(item v1.Deployment) CrdFlinkDeploymentInfo {
 	data := make(map[string]string, 0)
 	data["create_time"] = item.GetCreationTimestamp().Local().Format("2006-01-02 15:04:05")
 	data["replicas"] = fmt.Sprintf("%d", tea.Int32Value(item.Spec.Replicas))

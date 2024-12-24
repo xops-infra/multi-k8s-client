@@ -67,8 +67,8 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 					flinkType: item.Status,
 				},
 				Labels:       item.GetLabels(), // 集群创建时的标签都一样这里就取第一个
-				LoadBalancer: map[string]any{},
-				Info:         map[string]string{},
+				LoadBalancer: map[string]string{},
+				Info:         model.CrdFlinkDeploymentInfo{},
 			}
 			clusterMap[clustername] = clusterItem
 		}
@@ -84,7 +84,7 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 			if err == nil {
 				for k, item := range lbResp.Items {
 					v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
-					v.LoadBalancer.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
+					v.LoadBalancer[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
 				}
 			}
 			items = append(items, v)
