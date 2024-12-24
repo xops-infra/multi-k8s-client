@@ -54,7 +54,9 @@ func TestCrdFlinkDeploymentGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf(tea.Prettify(resp))
+	for _, v := range resp.Items {
+		fmt.Println(v.Info.GetVersion())
+	}
 }
 
 func generateRandomString(length int) string {

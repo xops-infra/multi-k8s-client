@@ -18,7 +18,11 @@ func TestFlinkV12ClusterList(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, item := range resp.Items {
-		t.Log(tea.Prettify(item))
+		t.Log(item.Info.GetVersion())
+		t.Log(item.Info.GetImages())
+		t.Log(item.Info.GetCreateTime())
+		t.Log(item.Info.GetReplicas())
+		t.Log(item.Info.GetRunTime())
 	}
 
 	t.Log(tea.Prettify(resp.Total))

@@ -91,13 +91,59 @@ func (s *CrdFlinkDeploymentInfo) GetCreateTime() (time.Time, error) {
 	return time.Time{}, fmt.Errorf("create_time not found")
 }
 
-// getRunTime
-func (s *CrdFlinkDeploymentInfo) GetRunTime() (time.Duration, error) {
+// getRunTime as 1y31d1h1m1s
+func (s *CrdFlinkDeploymentInfo) GetRunTime() (string, error) {
 	createTime, err := s.GetCreateTime()
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	return time.Since(createTime), nil
+
+	// 计算时间差
+	duration := time.Since(createTime)
+
+	// 提取各个时间单位
+	years := duration / (365 * 24 * time.Hour) // 估算一年为 365 天
+	duration -= years * 365 * 24 * time.Hour
+
+	days := duration / (24 * time.Hour)
+	duration -= days * 24 * time.Hour
+
+	hours := duration / time.Hour
+	duration -= hours * time.Hour
+
+	minutes := duration / time.Minute
+	duration -= minutes * time.Minute
+
+	seconds := duration / time.Second
+
+	// 根据优先级选择两个单位
+	result := ""
+
+	if years > 0 {
+		result = fmt.Sprintf("%dy", years)
+		if days > 0 {
+			result += fmt.Sprintf("%dd", days)
+		}
+	} else if days > 0 {
+		result = fmt.Sprintf("%dd", days)
+		if hours > 0 {
+			result += fmt.Sprintf("%dh", hours)
+		}
+	} else if hours > 0 {
+		result = fmt.Sprintf("%dh", hours)
+		if minutes > 0 {
+			result += fmt.Sprintf("%dm", minutes)
+		}
+	} else if minutes > 0 {
+		result = fmt.Sprintf("%dm", minutes)
+		if seconds > 0 {
+			result += fmt.Sprintf("%ds", seconds)
+		}
+	} else {
+		result = fmt.Sprintf("%ds", seconds)
+	}
+
+	return result, nil
 }
 
 func (s *CrdFlinkDeploymentInfo) GetReplicas() (int32, error) {
@@ -113,6 +159,13 @@ func (s *CrdFlinkDeploymentInfo) GetImages() (string, error) {
 		return images, nil
 	}
 	return "", fmt.Errorf("images not found")
+}
+
+func (s *CrdFlinkDeploymentInfo) GetVersion() (string, error) {
+	if version, ok := s.GetOk("version"); ok {
+		return version, nil
+	}
+	return "", fmt.Errorf("version not found")
 }
 
 type CreateFlinkClusterRequest struct {
@@ -604,19 +657,8 @@ func GetInfoFromItem(item unstructured.Unstructured) CrdFlinkDeploymentInfo {
 	if r, ok := item.Object["spec"].(map[string]any)["replicas"]; ok {
 		data["replicas"] = fmt.Sprintf("%v", r)
 	}
-	if item.Object["spec"].(map[string]any)["template"] != nil {
-		images := ""
-		for _, v := range item.Object["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"].([]any) {
-			images = fmt.Sprintf("%s,%s", images, v.(map[string]any)["image"])
-		}
-		data["images"] = strings.Trim(images, ",")
-	}
-
-	// get flink version
-	if item.Object["spec"].(map[string]any)["flinkVersion"] != nil {
-		data["flink_version"] = item.Object["spec"].(map[string]any)["flinkVersion"].(string)
-	}
-
+	data["images"] = GetFlinkImageFromItem(item)
+	data["version"] = GetFlinkVersionFromItem(item)
 	return data
 }
 
@@ -625,6 +667,21 @@ func GetFlinkConfigFromItem(item unstructured.Unstructured) map[string]any {
 		return config.(map[string]any)
 	}
 	return nil
+}
+
+func GetFlinkImageFromItem(item unstructured.Unstructured) string {
+	if image, ok := item.Object["spec"].(map[string]any)["image"]; ok {
+		return image.(string)
+	}
+	return ""
+}
+
+func GetFlinkVersionFromItem(item unstructured.Unstructured) string {
+	// flinkVersion
+	if version, ok := item.Object["spec"].(map[string]any)["flinkVersion"]; ok {
+		return version.(string)
+	}
+	return ""
 }
 
 func GetInfoFromDeploymentForV12(item v1.Deployment) CrdFlinkDeploymentInfo {
@@ -643,7 +700,7 @@ func GetInfoFromDeploymentForV12(item v1.Deployment) CrdFlinkDeploymentInfo {
 	// get flink version from image tag
 	for _, v := range item.Spec.Template.Spec.Containers {
 		if strings.Contains(v.Image, "flink") {
-			data["flink_version"] = strings.Split(v.Image, ":")[1]
+			data["version"] = strings.Split(v.Image, ":")[1]
 			break
 		}
 	}
