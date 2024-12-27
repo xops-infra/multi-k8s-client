@@ -83,6 +83,21 @@ func (s *CrdFlinkDeploymentInfo) GetOk(key string) (string, bool) {
 	return "", false
 }
 
+// GetResources
+func (s *CrdFlinkDeploymentInfo) GetResourcesLimitGb() (int64, error) {
+	if resources, ok := s.GetOk("resources_mem_limit"); ok {
+		return cast.ToInt64(resources), nil
+	}
+	return 0, fmt.Errorf("resources not found")
+}
+
+func (s *CrdFlinkDeploymentInfo) GetResourcesRequestGb() (int64, error) {
+	if resources, ok := s.GetOk("resources_mem_request"); ok {
+		return cast.ToInt64(resources), nil
+	}
+	return 0, fmt.Errorf("resources not found")
+}
+
 // create_time Format("2006-01-02 15:04:05")
 func (s *CrdFlinkDeploymentInfo) GetCreateTime() (time.Time, error) {
 	if createTime, ok := s.GetOk("create_time"); ok {
@@ -657,6 +672,13 @@ func GetInfoFromItem(item unstructured.Unstructured) CrdFlinkDeploymentInfo {
 	if r, ok := item.Object["spec"].(map[string]any)["replicas"]; ok {
 		data["replicas"] = fmt.Sprintf("%v", r)
 	}
+	// 在status.clusterInfo.total-memory 中获取 resources_mem_request
+	if r, ok := item.Object["status"].(map[string]any)["clusterInfo"].(map[string]any)["total-memory"]; ok {
+		// asGB
+		r = cast.ToFloat64(r) / 1024 / 1024 / 1024
+		data["resources_mem_request"] = fmt.Sprintf("%v", r)
+		data["resources_mem_limit"] = fmt.Sprintf("%v", r)
+	}
 	data["images"] = GetFlinkImageFromItem(item)
 	data["version"] = GetFlinkVersionFromItem(item)
 	return data
@@ -696,6 +718,23 @@ func GetInfoFromDeploymentForV12(item v1.Deployment) CrdFlinkDeploymentInfo {
 		images = fmt.Sprintf("%s,%s", images, v.Image)
 	}
 	data["images"] = strings.Trim(images, ",")
+
+	if len(item.Spec.Template.Spec.Containers) != 1 {
+		for _, v := range item.Spec.Template.Spec.Containers {
+			if v.Name == "taskmanager" {
+				// asGB
+				r := cast.ToFloat64(v.Resources.Limits.Memory().Value()) / 1024 / 1024 / 1024
+				data["resources_mem_limit"] = fmt.Sprintf("%v", r)
+				data["resources_mem_request"] = fmt.Sprintf("%v", r)
+				break
+			}
+		}
+	} else {
+		// asGB
+		r := cast.ToFloat64(item.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().Value()) / 1024 / 1024 / 1024
+		data["resources_mem_limit"] = fmt.Sprintf("%v", r)
+		data["resources_mem_request"] = fmt.Sprintf("%v", r)
+	}
 
 	// get flink version from image tag
 	for _, v := range item.Spec.Template.Spec.Containers {

@@ -55,7 +55,7 @@ func TestCrdFlinkDeploymentGet(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, v := range resp.Items {
-		fmt.Println(v.Info.GetVersion())
+		fmt.Println(v.Info.GetResourcesLimitGb())
 	}
 }
 

@@ -12,18 +12,19 @@ func TestFlinkV12ClusterList(t *testing.T) {
 	resp, err := k8s.FlinkV12ClusterList("test", model.FilterFlinkV12{
 		NameSpace: tea.String("flink"),
 		// Name:      tea.String("search-vector"),
-		Owner: tea.String("dingyingjie"),
+		// Owner: tea.String("dingyingjie"),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, item := range resp.Items {
-		t.Log(item.Info.GetVersion())
-		t.Log(item.Info.GetImages())
-		t.Log(item.Info.GetCreateTime())
-		t.Log(item.Info.GetReplicas())
-		t.Log(item.Info.GetRunTime())
-		t.Log(item.FlinkConfig)
+		t.Log(item.ClusterName)
+		// t.Log(item.Info.GetImages())
+		// t.Log(item.Info.GetCreateTime())
+		// t.Log(item.Info.GetReplicas())
+		t.Log(item.Info.GetResourcesLimitGb())
+		t.Log(item.Info.GetResourcesRequestGb())
+		// t.Log(item.FlinkConfig)
 	}
 
 	t.Log(tea.Prettify(resp.Total))

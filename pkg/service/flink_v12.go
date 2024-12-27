@@ -78,7 +78,6 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 		for _, v := range clusterMap {
 			flinkconfig := make(map[string]any, 0)
 			// 获取 flink configmap 内容
-			fmt.Println("------------get ", fmt.Sprintf(model.ConfigMapV12Name, v.ClusterName))
 			flinkConfigs, err := io.ConfigMapList(model.Filter{
 				NameSpace:     filter.NameSpace,
 				LabelSelector: tea.String(fmt.Sprintf("app=%s", v.ClusterName)),
