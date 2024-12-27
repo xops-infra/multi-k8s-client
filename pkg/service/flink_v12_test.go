@@ -23,6 +23,7 @@ func TestFlinkV12ClusterList(t *testing.T) {
 		t.Log(item.Info.GetCreateTime())
 		t.Log(item.Info.GetReplicas())
 		t.Log(item.Info.GetRunTime())
+		t.Log(item.FlinkConfig)
 	}
 
 	t.Log(tea.Prettify(resp.Total))

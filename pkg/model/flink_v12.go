@@ -665,7 +665,7 @@ func ConvertYamlToMap(data string) (map[string]any, error) {
 	for _, v := range dataArry {
 		if strings.Contains(v, ":") {
 			kv := strings.Split(v, ":")
-			result[kv[0]] = kv[1]
+			result[strings.Trim(kv[0], " ")] = strings.Trim(kv[1], " ")
 		}
 	}
 	return result, nil
