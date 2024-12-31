@@ -30,5 +30,6 @@ func (req *ApplyConfigMapRequest) NewConfigMap() (*corev1.ConfigMapApplyConfigur
 func (req *ApplyConfigMapRequest) ToOptions() metav1.ApplyOptions {
 	return metav1.ApplyOptions{
 		FieldManager: "multi-k8s-client",
+		Force:        true,
 	}
 }

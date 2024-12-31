@@ -27,6 +27,8 @@ func (c *k8sClient) DeploymentList(filter model.Filter) (*appv1.DeploymentList, 
 	return result, nil
 }
 
+// TODO: 完成其余功能
+// 目前只支持了 labels apply
 func (c *k8sClient) DeploymentApply(req model.ApplyDeploymentRequest) (any, error) {
 	if req.Namespace == nil {
 		req.Namespace = tea.String(corev1.NamespaceDefault)

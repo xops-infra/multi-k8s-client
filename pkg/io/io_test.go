@@ -27,6 +27,18 @@ func init() {
 
 }
 
+func TestDeploymentApply(t *testing.T) {
+	resp, err := client.DeploymentApply(model.ApplyDeploymentRequest{
+		Namespace:   tea.String("flink"),
+		ClusterName: tea.String("flink-zhoushoujian"),
+		Labels:      map[string]string{"owner": "zhoushoujian"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(tea.Prettify(resp))
+}
+
 func TestK8SPod(t *testing.T) {
 
 	var podName string
@@ -335,20 +347,17 @@ func TestConfigmapList(t *testing.T) {
 // ConfigMapApply
 func TestConfigmapApply(t *testing.T) {
 	req := model.ApplyConfigMapRequest{
-		Namespace: tea.String("default"),
-		Name:      tea.String("demo-configmap"),
-		Labels:    map[string]string{"app": "demo-configmap", "owner": "demo"},
-		Data: map[string]string{"abc.config": `asdasd
-		dddd
-		asd
-		xxx
-		`, "xxx.yaml": "value2"},
+		Namespace: tea.String("flink"),
+		Name:      tea.String("flink-config-flink-zhoushoujian"),
+		Labels:    map[string]string{"app": "flink-zhoushoujian", "owner": "zhoushoujian"},
+		Data: map[string]string{
+			"flink-conf.yaml":          `blob.server.port: 6124`,
+			"log4j-console.properties": "value2"},
 	}
-	resp, err := client.ConfigMapApply(req)
+	_, err := client.ConfigMapApply(req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("ConfigmapApply success", resp)
 }
 
 // ConfigMapDelete
@@ -410,10 +419,6 @@ func TestDeploymentCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("DeploymentCreate success", resp)
-}
-
-// DeploymentApply
-func TestDeploymentApply(t *testing.T) {
 }
 
 // DeploymentDelete

@@ -38,39 +38,39 @@ func (req *ApplyServiceRequest) NewService() (*corev1.ServiceApplyConfiguration,
 	} else {
 		namespace = v1.NamespaceDefault
 	}
-	if req.Name == nil || req.Spec == nil || req.Spec.Type == nil {
-		return nil, fmt.Errorf("need name and spec and type required")
-	}
 	yaml := corev1.Service(*req.Name, namespace)
 
-	// spec
-	yaml.Spec = corev1.ServiceSpec()
-	yaml.Spec.WithType(v1.ServiceType(*req.Spec.Type))
-	if req.Spec.Ports != nil {
-		for _, port := range req.Spec.Ports {
-			if port.Name == nil || port.Protocol == nil || port.Port == nil {
-				return nil, fmt.Errorf("need name, protocol and port required")
-			}
-			portal := v1.Protocol(*port.Protocol)
-			pport := corev1.ServicePortApplyConfiguration{
-				Name:     port.Name,
-				Protocol: &portal,
-				Port:     port.Port,
-			}
-			if port.TargetPort != nil {
-				pport.TargetPort = &intstr.IntOrString{
-					IntVal: *port.TargetPort,
+	if req.Spec != nil {
+		// spec
+		yaml.Spec = corev1.ServiceSpec()
+		yaml.Spec.WithType(v1.ServiceType(*req.Spec.Type))
+		if req.Spec.Ports != nil {
+			for _, port := range req.Spec.Ports {
+				if port.Name == nil || port.Protocol == nil || port.Port == nil {
+					return nil, fmt.Errorf("need name, protocol and port required")
 				}
+				portal := v1.Protocol(*port.Protocol)
+				pport := corev1.ServicePortApplyConfiguration{
+					Name:     port.Name,
+					Protocol: &portal,
+					Port:     port.Port,
+				}
+				if port.TargetPort != nil {
+					pport.TargetPort = &intstr.IntOrString{
+						IntVal: *port.TargetPort,
+					}
+				}
+				if port.NodePort != nil {
+					pport.NodePort = port.NodePort
+				}
+				yaml.Spec.Ports = append(yaml.Spec.Ports, pport)
 			}
-			if port.NodePort != nil {
-				pport.NodePort = port.NodePort
-			}
-			yaml.Spec.Ports = append(yaml.Spec.Ports, pport)
+		}
+		if req.Spec.Selector != nil {
+			yaml.Spec.Selector = req.Spec.Selector
 		}
 	}
-	if req.Spec.Selector != nil {
-		yaml.Spec.Selector = req.Spec.Selector
-	}
+
 	// metadata
 	if req.Labels != nil {
 		yaml.Labels = req.Labels
@@ -84,5 +84,6 @@ func (req *ApplyServiceRequest) NewService() (*corev1.ServiceApplyConfiguration,
 func (req *ApplyServiceRequest) ToOptions() metav1.ApplyOptions {
 	return metav1.ApplyOptions{
 		FieldManager: "multi-k8s-client",
+		Force:        true,
 	}
 }

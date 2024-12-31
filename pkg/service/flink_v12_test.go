@@ -30,8 +30,8 @@ func TestFlinkV12ClusterList(t *testing.T) {
 	t.Log(tea.Prettify(resp.Total))
 }
 
-// TEST FlinkV12ClustertApply
-func TestFlinkV12ClustertApply(t *testing.T) {
+// TEST FlinkV12ClusterCreate
+func TestFlinkV12ClusterCreate(t *testing.T) {
 	req := model.CreateFlinkV12ClusterRequest{
 		Name:      tea.String("app-session"),
 		NameSpace: tea.String("flink"),
@@ -55,11 +55,11 @@ func TestFlinkV12ClustertApply(t *testing.T) {
 		FlinkConfigRequest: map[string]any{"taskmanager.numberOfTaskSlots": 2},
 	}
 
-	resp, err := k8s.FlinkV12ClustertApply("test", req)
+	resp, err := k8s.FlinkV12ClusterCreate("test", req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("FlinkV12ClusterApply success", tea.Prettify(resp))
+	t.Log("FlinkV12ClusterCreate success", tea.Prettify(resp))
 }
 
 // TEST FlinkV12ClusterDelete
@@ -72,4 +72,22 @@ func TestFlinkV12ClusterDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log("FlinkV12ClusterDelete success")
+}
+
+func TestFlinkV12ClusterApply(t *testing.T) {
+	err := k8s.FlinkV12ClusterApply("test", "flink", "flink-zhoushoujian", model.ApplyFlinkV12ClusterRequest{
+		Labels: map[string]string{"owner": "zhoushoujian"},
+		FlinkConfiguration: map[string]any{
+			"jobmanager.memory.flink.size":         "3072m",
+			"jobmanager.memory.jvm-metaspace.size": "1024m",
+			"taskmanager.numberOfTaskSlots":        4,
+			"taskmanager.memory.managed.size":      "24m",
+			"taskmanager.memory.process.size":      "3200m",
+			"taskmanager.memory.network.min":       "100MB",
+			"taskmanager.memory.network.max":       "301MB",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 }

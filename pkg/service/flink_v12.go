@@ -127,7 +127,7 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
  3. pvc x1
  4. configmap x1
 */
-func (s *K8SService) FlinkV12ClustertApply(k8sClusterName string, req model.CreateFlinkV12ClusterRequest) (model.CreateResponse, error) {
+func (s *K8SService) FlinkV12ClusterCreate(k8sClusterName string, req model.CreateFlinkV12ClusterRequest) (model.CreateResponse, error) {
 	var resp model.CreateResponse
 	if io, ok := s.IOs[k8sClusterName]; ok {
 		// 1. 初始化所有配置，如果有问题直接报错
@@ -191,6 +191,64 @@ func (s *K8SService) FlinkV12ClustertApply(k8sClusterName string, req model.Crea
 		return resp, nil
 	}
 	return resp, fmt.Errorf("cluster not found")
+}
+
+func (s *K8SService) FlinkV12ClusterApply(k8sClusterName, namespace, clusterName string, req model.ApplyFlinkV12ClusterRequest) error {
+	if io, ok := s.IOs[k8sClusterName]; ok {
+		// 涉及到 deployment和 configmap更新
+		// 1. 更新 deployment
+		if namespace == "" {
+			namespace = "default"
+		}
+
+		if req.Labels != nil {
+			_, err := io.DeploymentApply(model.ApplyDeploymentRequest{
+				ClusterName: tea.String(fmt.Sprintf(model.JobManagerDeploymentName, clusterName)),
+				Namespace:   tea.String(namespace),
+				Labels:      req.Labels,
+			})
+			if err != nil {
+				return fmt.Errorf("job deployment apply error: %v", err)
+			}
+			_, err = io.DeploymentApply(model.ApplyDeploymentRequest{
+				ClusterName: tea.String(fmt.Sprintf(model.TaskManagerDeploymentName, clusterName)),
+				Namespace:   tea.String(namespace),
+				Labels:      req.Labels,
+			})
+			if err != nil {
+				return fmt.Errorf("task deployment apply error: %v", err)
+			}
+		}
+		if req.FlinkConfiguration != nil {
+			// 2. 更新 configmap
+			_, err := io.ConfigMapApply(model.ApplyConfigMapRequest{
+				Name:      tea.String(fmt.Sprintf(model.ConfigMapV12Name, clusterName)),
+				Namespace: tea.String(namespace),
+				Labels:    req.Labels,
+				Data: map[string]string{
+					"flink-conf.yaml":     model.ToString(req.FlinkConfiguration),
+					"logback-console.xml": model.LogbackConsole,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("configmap apply error: %v", err)
+			}
+		}
+
+		// 3. 更新 service
+		// TODO: invalid: spec.ports: Required value ???
+		// _, err = io.ServiceApply(model.ApplyServiceRequest{
+		// 	Name:      tea.String(fmt.Sprintf(model.JobManagerServiceName, clusterName)),
+		// 	Namespace: tea.String(namespace),
+		// 	Labels:    req.Labels,
+		// })
+		// if err != nil {
+		// 	return fmt.Errorf("service apply error: %v", err)
+		// }
+
+		return nil
+	}
+	return fmt.Errorf("cluster not found")
 }
 
 func (s *K8SService) FlinkV12ClusterDelete(k8sClusterName string, req model.DeleteFlinkClusterRequest) error {

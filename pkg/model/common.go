@@ -86,7 +86,8 @@ type K8SContract interface {
 	CrdFlinkTMScale(k8sClusterName string, req CrdFlinkTMScaleRequest) error
 	// FlinkV1.12.7
 	FlinkV12ClusterList(k8sClusterName string, filter FilterFlinkV12) (CrdFlinkDeploymentGetResponse, error)
-	FlinkV12ClustertApply(k8sClusterName string, req CreateFlinkV12ClusterRequest) (CreateResponse, error)
+	FlinkV12ClusterCreate(k8sClusterName string, req CreateFlinkV12ClusterRequest) (CreateResponse, error)
+	FlinkV12ClusterApply(k8sClusterName, namespace, clusterName string, req ApplyFlinkV12ClusterRequest) error // 注意这里apply是全局替换，不是 batch 请注意
 	FlinkV12ClusterDelete(k8sClusterName string, req DeleteFlinkClusterRequest) error
 	// FlinkV12ClusterGetConfig(k8sClusterName string) (map[string]string, error)
 

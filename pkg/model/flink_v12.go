@@ -240,6 +240,12 @@ type CreateFlinkV12ClusterRequest struct {
 	// NodeSelector       map[string]any       `json:"nodeSelector"`       // {"env":"flink"}
 }
 
+type ApplyFlinkV12ClusterRequest struct {
+	Labels map[string]string `json:"labels"`
+	// Image              *string           `json:"image"`
+	FlinkConfiguration map[string]any `json:"flinkConfiguration"`
+}
+
 // 主要组装 Name和 Size
 func (c *CreateFlinkV12ClusterRequest) NewPVC() ApplyPvcRequest {
 	req := ApplyPvcRequest{
@@ -349,13 +355,13 @@ func (c *CreateFlinkV12ClusterRequest) NewConfigMap() ApplyConfigMapRequest {
 		}
 	}
 	req.Data = map[string]string{
-		"flink-conf.yaml":     toString(defaultConfig),
+		"flink-conf.yaml":     ToString(defaultConfig),
 		"logback-console.xml": LogbackConsole,
 	}
 	return req
 }
 
-func toString(value map[string]any) string {
+func ToString(value map[string]any) string {
 	b, err := yaml.Marshal(value)
 	if err != nil {
 		return ""
