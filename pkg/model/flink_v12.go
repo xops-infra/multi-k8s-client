@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 
 	"github.com/alibabacloud-go/tea/tea"
@@ -671,7 +672,13 @@ func ConvertYamlToMap(data string) (map[string]any, error) {
 	for _, v := range dataArry {
 		if strings.Contains(v, ":") {
 			kv := strings.Split(v, ":")
-			result[strings.Trim(kv[0], " ")] = strings.Trim(kv[1], " ")
+			// 将字符串可能是数字的字符串转化为数字
+			value := strings.Trim(kv[1], " ")
+			if num, err := strconv.Atoi(value); err == nil {
+				result[strings.Trim(kv[0], " ")] = num
+			} else {
+				result[strings.Trim(kv[0], " ")] = value
+			}
 		}
 	}
 	return result, nil

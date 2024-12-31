@@ -131,34 +131,26 @@ func (s *CrdFlinkDeploymentInfo) GetRunTime() (string, error) {
 
 	seconds := duration / time.Second
 
-	// 根据优先级选择两个单位
-	result := ""
+	// 使用 strings.Builder 更优性能生成字符串
+	var builder strings.Builder
 
 	if years > 0 {
-		result = fmt.Sprintf("%dy", years)
-		if days > 0 {
-			result += fmt.Sprintf("%dd", days)
-		}
-	} else if days > 0 {
-		result = fmt.Sprintf("%dd", days)
-		if hours > 0 {
-			result += fmt.Sprintf("%dh", hours)
-		}
-	} else if hours > 0 {
-		result = fmt.Sprintf("%dh", hours)
-		if minutes > 0 {
-			result += fmt.Sprintf("%dm", minutes)
-		}
-	} else if minutes > 0 {
-		result = fmt.Sprintf("%dm", minutes)
-		if seconds > 0 {
-			result += fmt.Sprintf("%ds", seconds)
-		}
-	} else {
-		result = fmt.Sprintf("%ds", seconds)
+		builder.WriteString(fmt.Sprintf("%dy", years))
+	}
+	if days > 0 {
+		builder.WriteString(fmt.Sprintf("%dd", days))
+	}
+	if hours > 0 {
+		builder.WriteString(fmt.Sprintf("%dh", hours))
+	}
+	if minutes > 0 {
+		builder.WriteString(fmt.Sprintf("%dm", minutes))
+	}
+	if !(years > 0 || days > 0 || hours > 0 || minutes > 0) || seconds > 0 {
+		builder.WriteString(fmt.Sprintf("%ds", seconds))
 	}
 
-	return result, nil
+	return builder.String(), nil
 }
 
 func (s *CrdFlinkDeploymentInfo) GetReplicas() (int32, error) {
