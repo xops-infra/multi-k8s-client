@@ -11,7 +11,7 @@ import (
 func TestFlinkV12ClusterList(t *testing.T) {
 	resp, err := k8s.FlinkV12ClusterList("test", model.FilterFlinkV12{
 		NameSpace: tea.String("flink"),
-		Name:      tea.String("search-vector"),
+		Name:      tea.String("zsj-session-flink"),
 		// Owner: tea.String("dingyingjie"),
 	})
 	if err != nil {

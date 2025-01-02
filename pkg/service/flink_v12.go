@@ -81,7 +81,7 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 			flinkConfigs, err := io.ConfigMapList(model.Filter{
 				NameSpace:     filter.NameSpace,
 				LabelSelector: tea.String(fmt.Sprintf("app=%s", v.ClusterName)),
-				// FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s", fmt.Sprintf(model.ConfigMapV12Name, v.ClusterName))),
+				FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s", fmt.Sprintf(model.ConfigMapV12Name, v.ClusterName))),
 			})
 			if err != nil {
 				return model.CrdFlinkDeploymentGetResponse{}, fmt.Errorf("get flink v12 configmap error: %v", err)
