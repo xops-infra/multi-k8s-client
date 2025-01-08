@@ -101,13 +101,18 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 
 			// 增加 LoadBlance 连接信息
 			lbResp, err := io.ServiceList(model.Filter{
-				NameSpace:     tea.String(v.NameSpace),
-				FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s-jobmanager-lb-service", v.ClusterName)), // app-session-jobmanager-lb-service
+				NameSpace: tea.String(v.NameSpace),
+				// FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s-jobmanager-lb-service", v.ClusterName)), // app-session-jobmanager-lb-service
+				LabelSelector: tea.String(fmt.Sprintf("app=%s", v.ClusterName)),
 			})
 			if err == nil {
 				for k, item := range lbResp.Items {
-					v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
-					v.LoadBalancer[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
+					fmt.Println(item.Spec.Type)
+					// 只记录 LoadBalancer 信息
+					if item.Spec.Type == "LoadBalancer" {
+						v.Status.(map[string]any)[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
+						v.LoadBalancer[fmt.Sprintf("loadbalance-%d", k)] = fmt.Sprintf("%s:%d", item.Status.LoadBalancer.Ingress[0].IP, item.Spec.Ports[0].Port)
+					}
 				}
 			}
 			items = append(items, v)
