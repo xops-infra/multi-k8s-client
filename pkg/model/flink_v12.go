@@ -264,6 +264,7 @@ func (c *CreateFlinkV12ClusterRequest) NewService() ApplyServiceRequest {
 	req := ApplyServiceRequest{
 		Name:      tea.String(fmt.Sprintf(JobManagerServiceName, *c.Name)),
 		Namespace: c.NameSpace,
+		Labels:    map[string]string{"app": *c.Name, "component": "jobmanager"},
 		Spec: &ServiceSpec{
 			Selector: map[string]string{"app": *c.Name, "component": "jobmanager"},
 			Ports: []Port{
@@ -287,7 +288,7 @@ func (c *CreateFlinkV12ClusterRequest) NewService() ApplyServiceRequest {
 	}
 
 	if c.Owner != nil {
-		req.Labels = map[string]string{"owner": *c.Owner, "app": *c.Name}
+		req.Labels["owner"] = *c.Owner
 	}
 	return req
 }
@@ -302,6 +303,9 @@ func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
 	req := ApplyServiceRequest{
 		Name:      tea.String(fmt.Sprintf(JobManagerLBServiceName, *c.Name)),
 		Namespace: c.NameSpace,
+		Labels: map[string]string{
+			"app": *c.Name, // 默认加上 app
+		},
 		Spec: &ServiceSpec{
 			Selector: map[string]string{"app": *c.Name, "component": "jobmanager"},
 			Ports: []Port{
@@ -317,11 +321,15 @@ func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
 		},
 	}
 	if c.LoadBalancer != nil {
-		req.Labels = c.LoadBalancer.Labels
 		req.Annotations = c.LoadBalancer.Annotations
+		if c.LoadBalancer.Labels != nil {
+			for k, v := range c.LoadBalancer.Labels {
+				req.Labels[k] = v
+			}
+		}
 	}
 	if c.Owner != nil {
-		req.Labels = map[string]string{"owner": *c.Owner, "app": *c.Name}
+		req.Labels["owner"] = *c.Owner
 	}
 	return req
 }
