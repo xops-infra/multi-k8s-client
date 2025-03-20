@@ -489,14 +489,22 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 		jobContainer["image"] = *c.Image
 	}
 	if c.JobManager != nil && c.JobManager.Resource != nil {
+		// 解析 CPU 和内存资源
+		cpuLimit := resource.MustParse(*c.JobManager.Resource.CPU)
+		memLimit := resource.MustParse(*c.JobManager.Resource.Memory)
+
+		// 计算一半资源值
+		cpuRequest := resource.NewMilliQuantity(cpuLimit.MilliValue()/2, cpuLimit.Format)
+		memRequest := resource.NewQuantity(memLimit.Value()/2, memLimit.Format)
+
 		jobContainer["resources"] = map[string]any{
 			"requests": v1.ResourceList(v1.ResourceList{
-				v1.ResourceCPU:    resource.MustParse(*c.JobManager.Resource.CPU),
-				v1.ResourceMemory: resource.MustParse(*c.JobManager.Resource.Memory),
+				v1.ResourceCPU:    *cpuRequest,
+				v1.ResourceMemory: *memRequest,
 			}),
 			"limits": v1.ResourceList(v1.ResourceList{
-				v1.ResourceCPU:    resource.MustParse(*c.JobManager.Resource.CPU),
-				v1.ResourceMemory: resource.MustParse(*c.JobManager.Resource.Memory),
+				v1.ResourceCPU:    cpuLimit,
+				v1.ResourceMemory: memLimit,
 			}),
 		}
 	}
@@ -627,14 +635,20 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 		}
 	}
 	if c.TaskManager != nil && c.TaskManager.Resource != nil {
+		// 解析内存资源
+		memLimit := resource.MustParse(*c.TaskManager.Resource.Memory)
+
+		// 计算内存请求为一半
+		memRequest := resource.NewQuantity(memLimit.Value()/2, memLimit.Format)
+
 		taskManagerContainer["resources"] = map[string]any{
 			"requests": v1.ResourceList(v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse("100m"), // 默认少点，避免资源浪费
-				v1.ResourceMemory: resource.MustParse(*c.TaskManager.Resource.Memory),
+				v1.ResourceMemory: *memRequest,
 			}),
 			"limits": v1.ResourceList(v1.ResourceList{
 				v1.ResourceCPU:    resource.MustParse(*c.TaskManager.Resource.CPU),
-				v1.ResourceMemory: resource.MustParse(*c.TaskManager.Resource.Memory),
+				v1.ResourceMemory: memLimit,
 			}),
 		}
 	}

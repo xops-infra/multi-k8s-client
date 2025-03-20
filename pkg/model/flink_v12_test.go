@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/stretchr/testify/assert"
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 var req = model.CreateFlinkV12ClusterRequest{
@@ -86,4 +88,83 @@ func TestNewTaskManagerDeployment(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 	fmt.Println(tea.Prettify(createDeploymentRequest))
+}
+
+// TestCpuResourceCalculation 测试CPU资源计算是否正确
+func TestCpuResourceCalculation(t *testing.T) {
+	// 验证CPU资源计算
+	testCases := []struct {
+		cpuLimit       string
+		expectedCpuReq string
+	}{
+		{"1", "500m"},    // 1 CPU -> 500m
+		{"2", "1"},       // 2 CPU -> 1 CPU
+		{"500m", "250m"}, // 500m CPU -> 250m
+		{"4", "2"},       // 4 CPU -> 2 CPU
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("CPU:%s", tc.cpuLimit), func(t *testing.T) {
+			// 解析预期值
+			cpuLimit := resource.MustParse(tc.cpuLimit)
+			expectedCpuReq := resource.MustParse(tc.expectedCpuReq)
+
+			// 验证CPU请求是限制的一半
+			assert.Equal(t, expectedCpuReq.MilliValue(), cpuLimit.MilliValue()/2,
+				"CPU request should be half of limit")
+		})
+	}
+}
+
+// TestMemoryResourceCalculation 测试内存资源计算是否正确
+func TestMemoryResourceCalculation(t *testing.T) {
+	// 验证内存资源计算
+	testCases := []struct {
+		memLimit       string
+		expectedMemReq string
+	}{
+		{"1024Mi", "512Mi"}, // 1024Mi -> 512Mi
+		{"2Gi", "1Gi"},      // 2Gi -> 1Gi
+		{"512Mi", "256Mi"},  // 512Mi -> 256Mi
+		{"8Gi", "4Gi"},      // 8Gi -> 4Gi
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Memory:%s", tc.memLimit), func(t *testing.T) {
+			// 解析内存限制值
+			memLimit := resource.MustParse(tc.memLimit)
+			expectedMemReq := resource.MustParse(tc.expectedMemReq)
+
+			// 验证内存请求是限制的一半
+			assert.Equal(t, expectedMemReq.Value(), memLimit.Value()/2,
+				"Memory request should be half of limit")
+		})
+	}
+}
+
+// TestLargeResourceCalculation 测试大资源值计算是否正确
+func TestLargeResourceCalculation(t *testing.T) {
+	// 解析预期值
+	cpuLimit := resource.MustParse("4")
+	expectedCpuReq := resource.MustParse("2")
+
+	// 验证CPU请求是限制的一半
+	assert.Equal(t, expectedCpuReq.MilliValue(), cpuLimit.MilliValue()/2,
+		"CPU request should be half of limit for large values")
+
+	// 解析大内存值，使用正确的内存单位
+	memLimit := resource.MustParse("8192Mi")
+	expectedMemReq := resource.MustParse("4096Mi")
+
+	// 验证内存请求是限制的一半
+	assert.Equal(t, expectedMemReq.Value(), memLimit.Value()/2,
+		"Memory request should be half of limit for large values")
+
+	// 同样测试GiB单位
+	memLimitGi := resource.MustParse("8Gi")
+	expectedMemReqGi := resource.MustParse("4Gi")
+
+	// 验证内存请求是限制的一半
+	assert.Equal(t, expectedMemReqGi.Value(), memLimitGi.Value()/2,
+		"Memory request should be half of limit for Gi values")
 }

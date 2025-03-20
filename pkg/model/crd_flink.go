@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -190,6 +191,122 @@ type CreateFlinkClusterRequest struct {
 	Submitter          *string              `json:"submitter"`    // 提交人
 	Labels             map[string]string    `json:"labels"`       // 自定义标签
 	LoadBalancer       *LoadBalancerRequest `json:"loadBalancer"` // 配置相关 annotations启用云主机负载均衡,nil不会启用
+}
+
+func (c *CreateFlinkClusterRequest) Validate() error {
+	// 检查必填字段
+	if c.ClusterName == nil || *c.ClusterName == "" {
+		return fmt.Errorf("cluster_name is required")
+	}
+
+	if c.Submitter == nil || *c.Submitter == "" {
+		return fmt.Errorf("submitter is required")
+	}
+
+	// 校验集群名称格式
+	if !isValidK8sName(*c.ClusterName) {
+		return fmt.Errorf("cluster_name must be a valid kubernetes name (lowercase letters, numbers, and '-')")
+	}
+
+	// 检查JobManager配置
+	if c.JobManager != nil {
+		if c.JobManager.Resource != nil {
+			// 内存单位必须是Mi或Gi
+			if c.JobManager.Resource.Memory != nil {
+				if !strings.HasSuffix(*c.JobManager.Resource.Memory, "Mi") && !strings.HasSuffix(*c.JobManager.Resource.Memory, "Gi") {
+					return fmt.Errorf("job_manager.resource.memory must use Mi or Gi unit")
+				}
+			}
+
+			// CPU格式校验
+			if c.JobManager.Resource.CPU != nil && *c.JobManager.Resource.CPU != "" {
+				if !isValidCPUFormat(*c.JobManager.Resource.CPU) {
+					return fmt.Errorf("job_manager.resource.cpu must be a valid format (e.g. '1', '500m')")
+				}
+			}
+		}
+	}
+
+	// 检查TaskManager配置
+	if c.TaskManager != nil {
+		if c.TaskManager.Resource != nil {
+			// 内存单位必须是Mi或Gi
+			if c.TaskManager.Resource.Memory != nil {
+				if !strings.HasSuffix(*c.TaskManager.Resource.Memory, "Mi") && !strings.HasSuffix(*c.TaskManager.Resource.Memory, "Gi") {
+					return fmt.Errorf("task_manager.resource.memory must use Mi or Gi unit")
+				}
+			}
+
+			// CPU格式校验
+			if c.TaskManager.Resource.CPU != nil && *c.TaskManager.Resource.CPU != "" {
+				if !isValidCPUFormat(*c.TaskManager.Resource.CPU) {
+					return fmt.Errorf("task_manager.resource.cpu must be a valid format (e.g. '1', '500m')")
+				}
+			}
+		}
+	}
+
+	// 检查Job配置
+	if c.Job != nil {
+		if c.Job.JarURI == nil || *c.Job.JarURI == "" {
+			return fmt.Errorf("job.jar_url is required when job is provided")
+		}
+
+		// 检查JAR URL格式
+		if !strings.HasPrefix(*c.Job.JarURI, "local://") && !strings.HasPrefix(*c.Job.JarURI, "http://") && !strings.HasPrefix(*c.Job.JarURI, "https://") {
+			return fmt.Errorf("job.jar_url must start with 'local://', 'http://', or 'https://'")
+		}
+
+		// 升级模式校验
+		if c.Job.UpgradeMode != nil {
+			validModes := map[string]bool{"stateless": true, "savepoint": true, "last-state": true}
+			if !validModes[*c.Job.UpgradeMode] {
+				return fmt.Errorf("job.upgrade_mode must be one of: stateless, savepoint, last-state")
+			}
+		}
+	}
+
+	return nil
+}
+
+// 辅助函数: 检查是否是有效的Kubernetes资源名称
+func isValidK8sName(name string) bool {
+	// Kubernetes资源名称只能包含小写字母、数字和中横线，且不能以中横线开头或结尾
+	if len(name) == 0 || len(name) > 63 {
+		return false
+	}
+
+	for i, char := range name {
+		if !((char >= 'a' && char <= 'z') || (char >= '0' && char <= '9') || char == '-') {
+			return false
+		}
+
+		// 首尾字符不能是中横线
+		if (i == 0 || i == len(name)-1) && char == '-' {
+			return false
+		}
+	}
+
+	return true
+}
+
+// 辅助函数: 检查CPU格式是否有效
+func isValidCPUFormat(cpu string) bool {
+	// 支持的格式: "1", "1.5", "500m"
+	if len(cpu) == 0 {
+		return false
+	}
+
+	// 检查是否以m结尾的格式
+	if strings.HasSuffix(cpu, "m") {
+		numPart := cpu[:len(cpu)-1]
+		_, err := strconv.Atoi(numPart)
+		return err == nil
+	}
+
+	// 检查是否是数字或小数
+	_, err := strconv.ParseFloat(cpu, 64)
+	return err == nil
 }
 
 /*
@@ -536,7 +653,7 @@ type Manager struct {
 }
 
 type FlinkResource struct {
-	Memory *string `json:"memory" default:"2048m"`
+	Memory *string `json:"memory" default:"2048Mi"` // 必须使用Mi，Gi单位
 	CPU    *string `json:"cpu" default:"1"`
 }
 
