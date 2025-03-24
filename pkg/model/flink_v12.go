@@ -690,16 +690,31 @@ func (c *CreateFlinkV12ClusterRequest) NewTaskManagerDeployment() map[string]any
 // flink在 configmap中的配置为\n换行 : 间隔的 kv
 func ConvertYamlToMap(data string) (map[string]any, error) {
 	result := make(map[string]any, 0)
+
 	dataArry := strings.Split(data, "\n")
 	for _, v := range dataArry {
-		if strings.Contains(v, ":") {
-			kv := strings.Split(v, ":")
-			// 将字符串可能是数字的字符串转化为数字
-			value := strings.Trim(kv[1], " ")
+		v = strings.TrimSpace(v)
+		if v == "" || strings.HasPrefix(v, "#") {
+			continue // 跳过空行和注释
+		}
+
+		// 查找第一个冒号的位置，用于分隔键和值
+		colonIndex := strings.Index(v, ":")
+		if colonIndex > 0 {
+			key := strings.TrimSpace(v[:colonIndex])
+			// 确保值部分包含冒号后的所有内容
+			value := ""
+			if len(v) > colonIndex+1 {
+				value = strings.TrimSpace(v[colonIndex+1:])
+			}
+
+			// 尝试将字符串转换为数字
 			if num, err := strconv.Atoi(value); err == nil {
-				result[strings.Trim(kv[0], " ")] = num
+				result[key] = num
+			} else if f, err := strconv.ParseFloat(value, 64); err == nil {
+				result[key] = f
 			} else {
-				result[strings.Trim(kv[0], " ")] = value
+				result[key] = value
 			}
 		}
 	}
