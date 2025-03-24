@@ -107,7 +107,7 @@ func (s *CrdFlinkDeploymentInfo) GetCreateTime() (time.Time, error) {
 	return time.Time{}, fmt.Errorf("create_time not found")
 }
 
-// getRunTime as 1y31d1h1m1s
+// getRunTime as 1y31d1h
 func (s *CrdFlinkDeploymentInfo) GetRunTime() (string, error) {
 	createTime, err := s.GetCreateTime()
 	if err != nil {
@@ -117,6 +117,11 @@ func (s *CrdFlinkDeploymentInfo) GetRunTime() (string, error) {
 	// 计算时间差
 	duration := time.Since(createTime)
 
+	// 如果创建时间在未来或时间差小于1小时，返回"刚刚"
+	if duration < 0 || duration < time.Hour {
+		return "刚刚", nil
+	}
+
 	// 提取各个时间单位
 	years := duration / (365 * 24 * time.Hour) // 估算一年为 365 天
 	duration -= years * 365 * 24 * time.Hour
@@ -125,12 +130,6 @@ func (s *CrdFlinkDeploymentInfo) GetRunTime() (string, error) {
 	duration -= days * 24 * time.Hour
 
 	hours := duration / time.Hour
-	duration -= hours * time.Hour
-
-	minutes := duration / time.Minute
-	duration -= minutes * time.Minute
-
-	seconds := duration / time.Second
 
 	// 使用 strings.Builder 更优性能生成字符串
 	var builder strings.Builder
@@ -144,11 +143,10 @@ func (s *CrdFlinkDeploymentInfo) GetRunTime() (string, error) {
 	if hours > 0 {
 		builder.WriteString(fmt.Sprintf("%dh", hours))
 	}
-	if minutes > 0 {
-		builder.WriteString(fmt.Sprintf("%dm", minutes))
-	}
-	if !(years > 0 || days > 0 || hours > 0 || minutes > 0) || seconds > 0 {
-		builder.WriteString(fmt.Sprintf("%ds", seconds))
+
+	// 如果没有任何时间单位，显示"刚刚"
+	if builder.Len() == 0 {
+		return "刚刚", nil
 	}
 
 	return builder.String(), nil
