@@ -197,6 +197,7 @@ func (s *K8SService) FlinkV12ClusterCreate(k8sClusterName string, req model.Crea
 	return resp, fmt.Errorf("cluster not found")
 }
 
+// labels 不支持修改 app 标签，只能修改 owner 标签
 func (s *K8SService) FlinkV12ClusterApply(k8sClusterName, namespace, clusterName string, req model.ApplyFlinkV12ClusterRequest) error {
 	if io, ok := s.IOs[k8sClusterName]; ok {
 		// 涉及到 deployment和 configmap更新
@@ -206,6 +207,11 @@ func (s *K8SService) FlinkV12ClusterApply(k8sClusterName, namespace, clusterName
 		}
 
 		if req.Labels != nil {
+			if _, ok := req.Labels["app"]; ok {
+				return fmt.Errorf("app label is not supported update")
+			}
+			// 自动加上 app标签
+			req.Labels["app"] = clusterName
 			_, err := io.DeploymentApply(model.ApplyDeploymentRequest{
 				ClusterName: tea.String(fmt.Sprintf(model.JobManagerDeploymentName, clusterName)),
 				Namespace:   tea.String(namespace),
@@ -221,6 +227,39 @@ func (s *K8SService) FlinkV12ClusterApply(k8sClusterName, namespace, clusterName
 			})
 			if err != nil {
 				return fmt.Errorf("task deployment apply error: %v", err)
+			}
+			// 更新 jobmanager 的 service
+			// _, err = io.ServiceApply(model.ApplyServiceRequest{
+			// 	Name:        tea.String(fmt.Sprintf(model.JobManagerServiceName, clusterName)),
+			// 	Namespace:   tea.String(namespace),
+			// 	Labels:      req.Labels,
+			// 	Spec:        nil,
+			// 	Annotations: nil,
+			// })
+			// if err != nil {
+			// 	return fmt.Errorf("jobmanager service apply error: %v", err)
+			// }
+			// // 更新 JobManagerLBServiceName
+			// _, err = io.ServiceApply(model.ApplyServiceRequest{
+			// 	Name:        tea.String(fmt.Sprintf(model.JobManagerLBServiceName, clusterName)),
+			// 	Namespace:   tea.String(namespace),
+			// 	Labels:      req.Labels,
+			// 	Spec:        nil,
+			// 	Annotations: nil,
+			// })
+			// if err != nil {
+			// 	return fmt.Errorf("jobmanager lb service apply error: %v", err)
+			// }
+
+			// configmap
+			_, err = io.ConfigMapApply(model.ApplyConfigMapRequest{
+				Name:      tea.String(fmt.Sprintf(model.ConfigMapV12Name, clusterName)),
+				Namespace: tea.String(namespace),
+				Labels:    req.Labels,
+				Data:      nil,
+			})
+			if err != nil {
+				return fmt.Errorf("configmap apply error: %v", err)
 			}
 		}
 		if req.FlinkConfiguration != nil {

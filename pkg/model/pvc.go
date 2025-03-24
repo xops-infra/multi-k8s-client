@@ -31,7 +31,9 @@ func (a ApplyPvcRequest) NewPVC() (*corev1.PersistentVolumeClaimApplyConfigurati
 	}
 	config := corev1.PersistentVolumeClaim(*a.Name, namespace)
 	if a.Label != nil {
-		config.Labels = a.Label
+		// 自动加上 app标签
+		a.Label["app"] = *a.Name
+		config.WithLabels(a.Label)
 	}
 	spec := &corev1.PersistentVolumeClaimSpecApplyConfiguration{}
 	spec.StorageClassName = a.StorageClassName

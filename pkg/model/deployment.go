@@ -98,8 +98,13 @@ func (req *ApplyDeploymentRequest) NewApplyDeployment() (*appsv1.DeploymentApply
 	if req.Namespace == nil {
 		req.Namespace = tea.String(v1.NamespaceDefault)
 	}
-	deployment := appsv1.Deployment(*req.ClusterName, *req.Namespace).WithLabels(req.Labels)
+	deployment := appsv1.Deployment(*req.ClusterName, *req.Namespace)
 
+	if req.Labels != nil {
+		// 自动加上 app标签
+		req.Labels["app"] = *req.ClusterName
+		deployment.WithLabels(req.Labels)
+	}
 	return deployment, nil
 }
 

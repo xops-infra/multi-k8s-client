@@ -79,15 +79,15 @@ func TestFlinkV12ClusterDelete(t *testing.T) {
 func TestFlinkV12ClusterApply(t *testing.T) {
 	err := k8s.FlinkV12ClusterApply("test", "flink", "flink-zhoushoujian", model.ApplyFlinkV12ClusterRequest{
 		Labels: map[string]string{"owner": "zhoushoujian"},
-		FlinkConfiguration: map[string]any{
-			"jobmanager.memory.flink.size":         "3072m",
-			"jobmanager.memory.jvm-metaspace.size": "1024m",
-			"taskmanager.numberOfTaskSlots":        4,
-			"taskmanager.memory.managed.size":      "24m",
-			"taskmanager.memory.process.size":      "3200m",
-			"taskmanager.memory.network.min":       "100MB",
-			"taskmanager.memory.network.max":       "301MB",
-		},
+		// FlinkConfiguration: map[string]any{
+		// 	"jobmanager.memory.flink.size":         "3072m",
+		// 	"jobmanager.memory.jvm-metaspace.size": "1024m",
+		// 	"taskmanager.numberOfTaskSlots":        4,
+		// 	"taskmanager.memory.managed.size":      "24m",
+		// 	"taskmanager.memory.process.size":      "3200m",
+		// 	"taskmanager.memory.network.min":       "100MB",
+		// 	"taskmanager.memory.network.max":       "301MB",
+		// },
 	})
 	if err != nil {
 		t.Fatal(err)

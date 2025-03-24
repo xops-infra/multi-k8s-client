@@ -73,10 +73,12 @@ func (req *ApplyServiceRequest) NewService() (*corev1.ServiceApplyConfiguration,
 
 	// metadata
 	if req.Labels != nil {
-		yaml.Labels = req.Labels
+		// 自动加上 app标签
+		req.Labels["app"] = *req.Name
+		yaml.WithLabels(req.Labels)
 	}
 	if req.Annotations != nil {
-		yaml.Annotations = req.Annotations
+		yaml.WithAnnotations(req.Annotations)
 	}
 	return yaml, nil
 }

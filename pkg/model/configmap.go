@@ -23,7 +23,14 @@ func (req *ApplyConfigMapRequest) NewConfigMap() (*corev1.ConfigMapApplyConfigur
 	if req.Namespace == nil {
 		req.Namespace = tea.String(v1.NamespaceDefault)
 	}
-	configMap := corev1.ConfigMap(*req.Name, *req.Namespace).WithLabels(req.Labels).WithData(req.Data)
+	configMap := corev1.ConfigMap(*req.Name, *req.Namespace)
+
+	if req.Labels != nil {
+		configMap.WithLabels(req.Labels)
+	}
+	if req.Data != nil {
+		configMap.WithData(req.Data)
+	}
 	return configMap, nil
 }
 
