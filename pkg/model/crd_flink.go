@@ -780,11 +780,15 @@ func GetInfoFromItem(item unstructured.Unstructured) CrdFlinkDeploymentInfo {
 		data["replicas"] = fmt.Sprintf("%v", r)
 	}
 	// 在status.clusterInfo.total-memory 中获取 resources_mem_request
-	if r, ok := item.Object["status"].(map[string]any)["clusterInfo"].(map[string]any)["total-memory"]; ok {
-		// asGB
-		r = cast.ToFloat64(r) / 1024 / 1024 / 1024
-		data["resources_mem_request"] = fmt.Sprintf("%v", r)
-		data["resources_mem_limit"] = fmt.Sprintf("%v", r)
+	if obj, ok := item.Object["status"].(map[string]any); ok {
+		if clusterInfo, ok := obj["clusterInfo"].(map[string]any); ok {
+			if totalMemory, ok := clusterInfo["total-memory"]; ok {
+				// asGB
+				r := cast.ToFloat64(totalMemory) / 1024 / 1024 / 1024
+				data["resources_mem_request"] = fmt.Sprintf("%v", r)
+				data["resources_mem_limit"] = fmt.Sprintf("%v", r)
+			}
+		}
 	}
 	data["images"] = GetFlinkImageFromItem(item)
 	data["version"] = GetFlinkVersionFromItem(item)

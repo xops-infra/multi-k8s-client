@@ -86,11 +86,16 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 				ClusterName:  item.GetName(),
 				NameSpace:    item.GetNamespace(),
 				Labels:       item.GetLabels(),
-				Status:       item.Object["status"].(map[string]any),
 				Annotation:   item.GetAnnotations(),
 				LoadBalancer: map[string]string{},
 				Info:         model.GetInfoFromItem(item),
 				FlinkConfig:  model.GetFlinkConfigFromItem(item),
+				Status:       make(map[string]any),
+			}
+			if obj, ok := item.Object["status"].(map[string]any); ok {
+				if jobStatus, ok := obj["jobStatus"].(map[string]any); ok {
+					v.Status = jobStatus
+				}
 			}
 			// 增加 LoadBlance 连接信息
 			lbResp, err := io.ServiceList(model.Filter{
