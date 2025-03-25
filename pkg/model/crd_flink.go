@@ -476,6 +476,7 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 						"labels": map[string]interface{}{
 							"sdk":   "multi-k8s-client",
 							"owner": tea.StringValue(req.Submitter),
+							"app":   tea.StringValue(req.ClusterName),
 						},
 					},
 				},
@@ -493,6 +494,7 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 						"labels": map[string]interface{}{
 							"sdk":   "multi-k8s-client",
 							"owner": tea.StringValue(req.Submitter),
+							"app":   tea.StringValue(req.ClusterName),
 						},
 					},
 					"spec": map[string]interface{}{
@@ -554,6 +556,11 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 			"kind":       "Pod",
 			"metadata": map[string]interface{}{
 				"name": "pod-template",
+				"labels": map[string]interface{}{
+					"sdk":   "multi-k8s-client",
+					"app":   tea.StringValue(req.ClusterName),
+					"owner": tea.StringValue(req.Submitter),
+				},
 			},
 			"spec": map[string]interface{}{
 				"containers": containers,
@@ -600,6 +607,11 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 				"kind":       "Pod",
 				"metadata": map[string]interface{}{
 					"name": "task-manager-pod-template",
+					"labels": map[string]interface{}{
+						"sdk":   "multi-k8s-client",
+						"app":   tea.StringValue(req.ClusterName),
+						"owner": tea.StringValue(req.Submitter),
+					},
 				},
 				"spec": map[string]interface{}{},
 			}
@@ -621,6 +633,11 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 				"kind":       "Pod",
 				"metadata": map[string]interface{}{
 					"name": "job-manager-pod-template",
+					"labels": map[string]interface{}{
+						"sdk":   "multi-k8s-client",
+						"app":   tea.StringValue(req.ClusterName),
+						"owner": tea.StringValue(req.Submitter),
+					},
 				},
 				"spec": map[string]interface{}{},
 			}

@@ -110,11 +110,34 @@ func TestCrdFlinkDeploymentApply(t *testing.T) {
 			JarURI:      tea.String("local:///opt/flink/examples/streaming/StateMachineExample.jar"),
 		},
 	}
-	resp, err := k8s.CrdFlinkDeploymentApply("dev", req)
+	fmt.Println(tea.Prettify(req))
+	resp, err := k8s.CrdFlinkDeploymentApply("test", req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Logf("resp: %v", resp)
+}
+
+// TEST CrdFlinkDeploymentList
+func TestCrdFlinkDeploymentList(t *testing.T) {
+	resp, err := k8s.CrdFlinkDeploymentList("test", model.Filter{
+		NameSpace: tea.String("flink"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range resp.Items {
+		fmt.Println(v.ClusterName)
+		// 删除
+		err := k8s.CrdFlinkDeploymentDelete("test", model.DeleteFlinkClusterRequest{
+			ClusterName: tea.String(v.ClusterName),
+			NameSpace:   tea.String("flink"),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log("success delete", v.ClusterName)
+	}
 }
 
 // TEST CrdFlinkDeploymentDelete
