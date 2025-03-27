@@ -208,7 +208,9 @@ func (s *K8SService) FlinkV12ClusterApply(k8sClusterName, namespace, clusterName
 
 		if req.Labels != nil {
 			if _, ok := req.Labels["app"]; ok {
-				return fmt.Errorf("app label is not supported update")
+				if req.Labels["app"] != clusterName {
+					return fmt.Errorf("app label is not supported update")
+				}
 			}
 			// 自动加上 app标签
 			req.Labels["app"] = clusterName
