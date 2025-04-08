@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 
@@ -296,9 +297,9 @@ func (c *CreateFlinkV12ClusterRequest) NewService() ApplyServiceRequest {
 // Port 不指定自动分配
 func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
 	// 随机生成30000-32767端口
-	// min := 30000
-	// max := 32767
-	// randPort := rand.Intn(max-min+1) + min
+	min := 30000
+	max := 32767
+	randPort := rand.Intn(max-min+1) + min
 	clusterName := *c.Name
 	req := ApplyServiceRequest{
 		Name:      tea.String(fmt.Sprintf(JobManagerLBServiceName, clusterName)),
@@ -312,7 +313,8 @@ func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
 				{
 					Name:       tea.String("webui"),
 					Protocol:   tea.String("TCP"),
-					Port:       tea.Int32(8081),
+					Port:       tea.Int32(int32(randPort)),
+					NodePort:   tea.Int32(int32(randPort)),
 					TargetPort: tea.Int32(8081),
 				},
 			},
