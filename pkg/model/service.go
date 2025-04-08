@@ -73,8 +73,7 @@ func (req *ApplyServiceRequest) NewService() (*corev1.ServiceApplyConfiguration,
 
 	// metadata
 	if req.Labels != nil {
-		// 自动加上 app标签
-		req.Labels["app"] = *req.Name
+		// req.Labels["app"] = *req.Name 这里不能加了。app前面传入修改过了
 		yaml.WithLabels(req.Labels)
 	}
 	if req.Annotations != nil {

@@ -100,11 +100,12 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 			v.FlinkConfig = flinkconfig
 
 			// 增加 LoadBlance 连接信息
-			lbResp, err := io.ServiceList(model.Filter{
+			inputS := model.Filter{
 				NameSpace: tea.String(v.NameSpace),
 				// FieldSelector: tea.String(fmt.Sprintf("metadata.name=%s-jobmanager-lb-service", v.ClusterName)), // app-session-jobmanager-lb-service
 				LabelSelector: tea.String(fmt.Sprintf("app=%s", v.ClusterName)),
-			})
+			}
+			lbResp, err := io.ServiceList(inputS)
 			if err == nil {
 				for k, item := range lbResp.Items {
 					// 只记录 LoadBalancer 信息
@@ -114,6 +115,7 @@ func (s *K8SService) FlinkV12ClusterList(k8sClusterName string, filter model.Fil
 					}
 				}
 			}
+
 			items = append(items, v)
 		}
 		return model.CrdFlinkDeploymentGetResponse{

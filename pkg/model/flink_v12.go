@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"math/rand"
 	"strconv"
 	"strings"
 
@@ -261,12 +260,13 @@ func (c *CreateFlinkV12ClusterRequest) NewPVC() ApplyPvcRequest {
 }
 
 func (c *CreateFlinkV12ClusterRequest) NewService() ApplyServiceRequest {
+	clusterName := *c.Name
 	req := ApplyServiceRequest{
-		Name:      tea.String(fmt.Sprintf(JobManagerServiceName, *c.Name)),
+		Name:      tea.String(fmt.Sprintf(JobManagerServiceName, clusterName)),
 		Namespace: c.NameSpace,
-		Labels:    map[string]string{"app": *c.Name, "component": "jobmanager"},
+		Labels:    map[string]string{"app": clusterName, "component": "jobmanager"},
 		Spec: &ServiceSpec{
-			Selector: map[string]string{"app": *c.Name, "component": "jobmanager"},
+			Selector: map[string]string{"app": clusterName, "component": "jobmanager"},
 			Ports: []Port{
 				{
 					Name:     tea.String("rpc"),
@@ -296,25 +296,24 @@ func (c *CreateFlinkV12ClusterRequest) NewService() ApplyServiceRequest {
 // Port 不指定自动分配
 func (c *CreateFlinkV12ClusterRequest) NewLBService() ApplyServiceRequest {
 	// 随机生成30000-32767端口
-	min := 30000
-	max := 32767
-	randPort := rand.Intn(max-min+1) + min
-
+	// min := 30000
+	// max := 32767
+	// randPort := rand.Intn(max-min+1) + min
+	clusterName := *c.Name
 	req := ApplyServiceRequest{
-		Name:      tea.String(fmt.Sprintf(JobManagerLBServiceName, *c.Name)),
+		Name:      tea.String(fmt.Sprintf(JobManagerLBServiceName, clusterName)),
 		Namespace: c.NameSpace,
 		Labels: map[string]string{
-			"app": *c.Name, // 默认加上 app
+			"app": clusterName, // 默认加上 app
 		},
 		Spec: &ServiceSpec{
-			Selector: map[string]string{"app": *c.Name, "component": "jobmanager"},
+			Selector: map[string]string{"app": clusterName, "component": "jobmanager"},
 			Ports: []Port{
 				{
 					Name:       tea.String("webui"),
 					Protocol:   tea.String("TCP"),
-					Port:       tea.Int32(int32(randPort)),
+					Port:       tea.Int32(8081),
 					TargetPort: tea.Int32(8081),
-					NodePort:   tea.Int32(int32(randPort)),
 				},
 			},
 			Type: tea.String("LoadBalancer"),

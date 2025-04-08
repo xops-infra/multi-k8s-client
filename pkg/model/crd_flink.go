@@ -786,29 +786,104 @@ type CrdFlinkTMScaleRequest struct {
 	Replicas    *int32  `json:"replicas" binding:"required"` // 调整后的 TM 数量
 }
 
+func fmtString(s string) int {
+	// 2g 转换为 2
+	if strings.Contains(s, "Gi") {
+		return cast.ToInt(strings.TrimSuffix(s, "Gi"))
+	}
+	if strings.Contains(s, "Mi") {
+		return cast.ToInt(strings.TrimSuffix(s, "Mi")) / 1024
+	}
+	if strings.Contains(s, "m") {
+		return cast.ToInt(strings.TrimSuffix(s, "m")) / 1024
+	}
+	if strings.Contains(s, "g") {
+		return cast.ToInt(strings.TrimSuffix(s, "g"))
+	}
+	if strings.Contains(s, "G") {
+		return cast.ToInt(strings.TrimSuffix(s, "G"))
+	}
+	return cast.ToInt(s)
+}
+
 // 获取创建时间，replicas，更新时间
+// 这里是一些比较私有化的信息，需要根据实际情况进行调整
+// 兼容 v12版本和 operator版本的信息汇聚
+/*
+{
+   "create_time": "2025-03-25 17:25:05",
+   "images": "flink:1.13",
+   "owner": "shijiahao",
+   "resources_mem_limit": "6",
+   "resources_mem_request": "6",
+   "version": "v1_13"
+}
+*/
 func GetInfoFromItem(item unstructured.Unstructured) CrdFlinkDeploymentInfo {
 	data := make(map[string]string, 0)
-	for k, v := range item.GetLabels() {
-		data[k] = v
-	}
-	data["create_time"] = item.GetCreationTimestamp().Local().Format("2006-01-02 15:04:05")
-	if r, ok := item.Object["spec"].(map[string]any)["replicas"]; ok {
-		data["replicas"] = fmt.Sprintf("%v", r)
-	}
-	// 在status.clusterInfo.total-memory 中获取 resources_mem_request
-	if obj, ok := item.Object["status"].(map[string]any); ok {
-		if clusterInfo, ok := obj["clusterInfo"].(map[string]any); ok {
-			if totalMemory, ok := clusterInfo["total-memory"]; ok {
-				// asGB
-				r := cast.ToFloat64(totalMemory) / 1024 / 1024 / 1024
-				data["resources_mem_request"] = fmt.Sprintf("%v", r)
-				data["resources_mem_limit"] = fmt.Sprintf("%v", r)
+	if item.GetKind() == "FlinkDeployment" {
+		for k, v := range item.GetLabels() {
+			data[k] = v
+		}
+		metadata := item.Object["metadata"].(map[string]any)
+		if createTime, ok := metadata["creationTimestamp"]; ok {
+			data["create_time"] = createTime.(string)
+		}
+		if labels, ok := metadata["labels"].(map[string]any); ok {
+			if owner, ok := labels["owner"]; ok {
+				data["owner"] = owner.(string)
 			}
 		}
+		spec := item.Object["spec"].(map[string]any)
+		if taskManager, ok := spec["taskManager"]; ok {
+			if resource, ok := taskManager.(map[string]any)["resource"]; ok {
+				if memory, ok := resource.(map[string]any)["memory"]; ok {
+					// 2g 转换为 2
+					gb := fmtString(memory.(string))
+					data["resources_mem_limit"] = fmt.Sprintf("%d", gb)
+					data["resources_mem_request"] = fmt.Sprintf("%d", gb)
+				}
+			}
+			if replicas, ok := taskManager.(map[string]any)["replicas"]; ok {
+				// 处理 null 的情况
+				if replicas == nil {
+					data["replicas"] = "0"
+				} else {
+					data["replicas"] = fmt.Sprintf("%v", replicas)
+				}
+			} else {
+				data["replicas"] = "0"
+			}
+		}
+		if flinkVersion, ok := spec["flinkVersion"]; ok {
+			data["version"] = flinkVersion.(string)
+		}
+		if image, ok := spec["image"]; ok {
+			data["images"] = image.(string)
+		}
+
+	} else {
+		for k, v := range item.GetLabels() {
+			data[k] = v
+		}
+		data["create_time"] = item.GetCreationTimestamp().Local().Format("2006-01-02 15:04:05")
+		if r, ok := item.Object["spec"].(map[string]any)["replicas"]; ok {
+			data["replicas"] = fmt.Sprintf("%v", r)
+		}
+		if obj, ok := item.Object["status"].(map[string]any); ok {
+			if clusterInfo, ok := obj["clusterInfo"].(map[string]any); ok {
+				if totalMemory, ok := clusterInfo["total-memory"]; ok {
+					// asGB
+					r := cast.ToFloat64(totalMemory) / 1024 / 1024 / 1024
+					data["resources_mem_request"] = fmt.Sprintf("%v", r)
+					data["resources_mem_limit"] = fmt.Sprintf("%v", r)
+				}
+			}
+		}
+		data["images"] = GetFlinkImageFromItem(item)
+		data["version"] = GetFlinkVersionFromItem(item)
 	}
-	data["images"] = GetFlinkImageFromItem(item)
-	data["version"] = GetFlinkVersionFromItem(item)
+	fmt.Println("GetInfoFromItem:", tea.Prettify(data))
 	return data
 }
 
