@@ -495,12 +495,11 @@ func (c *CreateFlinkV12ClusterRequest) NewJobManagerDeployment() map[string]any 
 		memLimit := resource.MustParse(*c.JobManager.Resource.Memory)
 
 		// 计算一半资源值
-		cpuRequest := resource.NewMilliQuantity(cpuLimit.MilliValue()/2, cpuLimit.Format)
 		memRequest := resource.NewQuantity(memLimit.Value()/2, memLimit.Format)
 
 		jobContainer["resources"] = map[string]any{
 			"requests": v1.ResourceList(v1.ResourceList{
-				v1.ResourceCPU:    *cpuRequest,
+				v1.ResourceCPU:    resource.MustParse("100m"),
 				v1.ResourceMemory: *memRequest,
 			}),
 			"limits": v1.ResourceList(v1.ResourceList{
