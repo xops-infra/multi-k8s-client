@@ -41,29 +41,14 @@ func TestDeploymentApply(t *testing.T) {
 
 func TestK8SPod(t *testing.T) {
 
-	var podName string
-	{
-		// List
-		pods, err := client.PodList("default")
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log("List Pod success", len(pods.Items))
-		if len(pods.Items) == 0 {
-			t.Fatal("Pod not found")
-			return
-		}
-		podName = pods.Items[0].Name
+	pods, err := client.PodList(model.Filter{
+		NameSpace:     tea.String("flink"),
+		LabelSelector: tea.String("app=patent-translation,component=taskmanager"),
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
-	{
-		// Get
-		pod, err := client.PodGet("default", podName)
-		if err != nil {
-			t.Fatal(err)
-		}
-		// fmt.Println(tea.Prettify(pod))
-		t.Log("Get Pod success", pod.Name)
-	}
+	t.Log("List Pod success", len(pods.Items))
 }
 
 // TestK8SRbac

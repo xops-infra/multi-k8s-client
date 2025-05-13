@@ -28,7 +28,7 @@ func (s *Filter) ToOptions() metav1.ListOptions {
 type K8SIO interface {
 	GetClusterInfo() ClusterInfo
 	// POD
-	PodList(namespace string) (*podV1.PodList, error)
+	PodList(filter Filter) (*podV1.PodList, error)
 	PodGet(namespace, name string) (*podV1.Pod, error)
 
 	// DEPLOYMENT

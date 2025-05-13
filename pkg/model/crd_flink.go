@@ -159,6 +159,11 @@ func (s *CrdFlinkDeploymentInfo) GetReplicas() (int32, error) {
 	return 0, fmt.Errorf("replicas not found")
 }
 
+// SetReplicas 设置副本数量
+func (s *CrdFlinkDeploymentInfo) SetReplicas(replicas int32) {
+	(*s)["replicas"] = strconv.Itoa(int(replicas))
+}
+
 // images is string image with ,
 func (s *CrdFlinkDeploymentInfo) GetImages() (string, error) {
 	if images, ok := s.GetOk("images"); ok {
@@ -883,7 +888,7 @@ func GetInfoFromItem(item unstructured.Unstructured) CrdFlinkDeploymentInfo {
 		data["images"] = GetFlinkImageFromItem(item)
 		data["version"] = GetFlinkVersionFromItem(item)
 	}
-	fmt.Println("GetInfoFromItem:", tea.Prettify(data))
+	// fmt.Println("GetInfoFromItem:", tea.Prettify(data))
 	return data
 }
 

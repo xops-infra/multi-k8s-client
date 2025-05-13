@@ -81,6 +81,16 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 		}
 		var items []model.CrdFlinkDeployment
 		for _, item := range resp.Items {
+			info := model.GetInfoFromItem(item)
+			// 因为 opertor是动态任务，所以不知道他的他 TM 数量，这里通过 查询pod labels app=clusterName &component=jobmanager 获取数量
+			podResp, err := io.PodList(model.Filter{
+				NameSpace:     tea.String(item.GetNamespace()),
+				LabelSelector: tea.String(fmt.Sprintf("app=%s,component=taskmanager", item.GetName())),
+			})
+			if err == nil {
+				// 作为补充信息，没有就没有吧。
+				info.SetReplicas(int32(len(podResp.Items)))
+			}
 			// fmt.Println(tea.Prettify(item.Object))
 			v := model.CrdFlinkDeployment{
 				ClusterName:  item.GetName(),
@@ -88,7 +98,7 @@ func (s *K8SService) CrdFlinkDeploymentList(k8sClusterName string, filter model.
 				Labels:       item.GetLabels(),
 				Annotation:   item.GetAnnotations(),
 				LoadBalancer: map[string]string{},
-				Info:         model.GetInfoFromItem(item),
+				Info:         info,
 				FlinkConfig:  model.GetFlinkConfigFromItem(item),
 				Status:       make(map[string]any),
 			}
