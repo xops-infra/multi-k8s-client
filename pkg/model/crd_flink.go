@@ -472,7 +472,7 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 			"jobManager": map[string]interface{}{
 				"resource": map[string]interface{}{
 					"memory": "2048m",
-					"cpu":    1,
+					"cpu":    "100m",
 				},
 				"podTemplate": map[string]interface{}{
 					"apiVersion": "v1",
@@ -489,7 +489,7 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 			"taskManager": map[string]interface{}{
 				"resource": map[string]interface{}{
 					"memory": "2048m",
-					"cpu":    1,
+					"cpu":    "100m",
 				},
 				"podTemplate": map[string]interface{}{
 					"apiVersion": "v1",
