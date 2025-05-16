@@ -572,8 +572,9 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 				"volumes": []map[string]interface{}{
 					{
 						"name": "flink-logs",
-						"emptyDir": map[string]interface{}{
-							"medium": "Memory",
+						"hostPath": map[string]interface{}{
+							"path": fmt.Sprintf("/mnt/log/%s/", tea.StringValue(req.ClusterName)),
+							"type": "DirectoryOrCreate",
 						},
 					},
 				},
@@ -662,6 +663,9 @@ func (req *CreateFlinkClusterRequest) ToYaml() map[string]any {
 	}
 	if req.Submitter != nil {
 		yaml["metadata"].(map[string]interface{})["labels"].(map[string]string)["owner"] = *req.Submitter
+	}
+	if req.ClusterName != nil {
+		yaml["metadata"].(map[string]interface{})["labels"].(map[string]string)["app"] = *req.ClusterName
 	}
 
 	return yaml

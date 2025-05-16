@@ -11,6 +11,10 @@ go get -u github.com/xops-infra/multi-k8s-client@main
 
 ### 更新日志
 
+- 2025-05-16
+
+  - feat: 支持 FlinkDeployment 的 labels 设置，支持 app 和 owner 标签；
+
 - 2024-11
 
   - feat: 支持 Flink operator 方式自动创建 LB service，查询；
