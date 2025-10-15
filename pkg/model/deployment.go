@@ -101,8 +101,10 @@ func (req *ApplyDeploymentRequest) NewApplyDeployment() (*appsv1.DeploymentApply
 	deployment := appsv1.Deployment(*req.ClusterName, *req.Namespace)
 
 	if req.Labels != nil {
-		// 自动加上 app标签
-		req.Labels["app"] = *req.ClusterName
+		// 只有在 app 标签不存在时才自动添加，避免覆盖已有的 app 标签
+		if _, exists := req.Labels["app"]; !exists {
+			req.Labels["app"] = *req.ClusterName
+		}
 		deployment.WithLabels(req.Labels)
 	}
 	return deployment, nil
