@@ -273,10 +273,19 @@ func (s *K8SService) FlinkV12ClusterApply(k8sClusterName, namespace, clusterName
 		}
 		if req.FlinkConfiguration != nil {
 			// 2. 更新 configmap
+			// 为 ConfigMap 创建独立的 labels，确保 app 标签使用原始的 clusterName
+			configMapLabels := make(map[string]string)
+			if req.Labels != nil {
+				for k, v := range req.Labels {
+					configMapLabels[k] = v
+				}
+			}
+			configMapLabels["app"] = clusterName // 确保 ConfigMap 的 app 标签使用原始 clusterName
+			
 			_, err := io.ConfigMapApply(model.ApplyConfigMapRequest{
 				Name:      tea.String(fmt.Sprintf(model.ConfigMapV12Name, clusterName)),
 				Namespace: tea.String(namespace),
-				Labels:    req.Labels,
+				Labels:    configMapLabels,
 				Data: map[string]string{
 					"flink-conf.yaml":     model.ToString(req.FlinkConfiguration),
 					"logback-console.xml": model.LogbackConsole,
