@@ -237,6 +237,7 @@ type CreateFlinkV12ClusterRequest struct {
 	LoadBalancer       *LoadBalancerRequest `json:"loadBalancer"` // 配置相关 annotations启用云主机负载均衡
 	TaskManager        *TaskManagerV12      `json:"taskManager"`
 	JobManager         *JobManagerV12       `json:"jobManager"`
+	StorageClassName   *string              `json:"storageClassName"`
 	FlinkConfigRequest map[string]any       `json:"flinkConfigRequest"` // flink-conf.yaml 的具体配置，example：{"key":"key","value":"value"}
 	// NodeSelector       map[string]any       `json:"nodeSelector"`       // {"env":"flink"}
 }
@@ -256,6 +257,9 @@ func (c *CreateFlinkV12ClusterRequest) NewPVC() ApplyPvcRequest {
 	}
 	if c.Owner != nil {
 		req.Label = map[string]string{"owner": *c.Owner, "app": *c.Name}
+	}
+	if c.StorageClassName != nil {
+		req.StorageClassName = c.StorageClassName
 	}
 	return req
 }
