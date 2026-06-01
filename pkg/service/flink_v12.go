@@ -260,16 +260,6 @@ func (s *K8SService) FlinkV12ClusterApply(k8sClusterName, namespace, clusterName
 			// 	return fmt.Errorf("jobmanager lb service apply error: %v", err)
 			// }
 
-			// configmap
-			_, err = io.ConfigMapApply(model.ApplyConfigMapRequest{
-				Name:      tea.String(fmt.Sprintf(model.ConfigMapV12Name, clusterName)),
-				Namespace: tea.String(namespace),
-				Labels:    req.Labels,
-				Data:      nil,
-			})
-			if err != nil {
-				return fmt.Errorf("configmap apply error: %v", err)
-			}
 		}
 		if req.FlinkConfiguration != nil {
 			// 2. 更新 configmap
@@ -281,7 +271,7 @@ func (s *K8SService) FlinkV12ClusterApply(k8sClusterName, namespace, clusterName
 				}
 			}
 			configMapLabels["app"] = clusterName // 确保 ConfigMap 的 app 标签使用原始 clusterName
-			
+
 			_, err := io.ConfigMapApply(model.ApplyConfigMapRequest{
 				Name:      tea.String(fmt.Sprintf(model.ConfigMapV12Name, clusterName)),
 				Namespace: tea.String(namespace),
