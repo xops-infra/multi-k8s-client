@@ -5,9 +5,19 @@
 
 ### 使用
 
+建议固定经过验证的版本，避免直接依赖 `@main`；将下方占位符替换为实际发布的版本号。本次修复的新 tag 尚未发布。
+
 ```bash
-go get -u github.com/xops-infra/multi-k8s-client@main
+go get github.com/xops-infra/multi-k8s-client@<已发布版本号>
 ```
+
+### Flink 1.12 的 ServiceAccount token 权限
+
+Flink 1.12 的 JobManager（含 sidecar 场景）和 TaskManager Pod 模板设置 `securityContext.fsGroup: 9999` 与 `fsGroupChangePolicy: OnRootMismatch`，使镜像中切换到 UID/GID 9999 的 Flink 进程可读取投射的 ServiceAccount token。容器仍声明 `runAsUser: 0`，并保留原有 postStart 权限初始化钩子。
+
+升级 SDK 不会自动修改既有工作负载；需要通过更新后的模板重新部署才能应用此配置。ServiceAccount 及其所需 RBAC 授权仍须正确配置，token 可读不能替代授权；默认 ServiceAccount 选择和 token 自动挂载行为保持不变。
+
+`fsGroup` 也可能影响支持该机制的 PVC 卷的属组和访问权限，部署前需评估现有数据权限；`OnRootMismatch` 可在卷根目录权限匹配时避免递归修改权限。
 
 ### 更新日志
 

@@ -6,7 +6,9 @@ import (
 
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xops-infra/multi-k8s-client/pkg/model"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -88,6 +90,71 @@ func TestNewTaskManagerDeployment(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 	fmt.Println(tea.Prettify(createDeploymentRequest))
+}
+
+func TestFlinkV12DeploymentServiceAccountTokenPermissions(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		sidecar   bool
+		generate  func(*model.CreateFlinkV12ClusterRequest) map[string]any
+		container string
+		postStart []string
+	}{
+		{
+			name: "jobmanager", generate: (*model.CreateFlinkV12ClusterRequest).NewJobManagerDeployment,
+			container: "jobmanager",
+			postStart: []string{"/bin/sh", "-c", "mkdir -p /opt/flink/target/flink-web-upload&&chown -R flink:flink /opt/flink/target/"},
+		},
+		{
+			name: "jobmanager_with_sidecar", sidecar: true,
+			generate: (*model.CreateFlinkV12ClusterRequest).NewJobManagerDeployment, container: "jobmanager",
+			postStart: []string{"/bin/sh", "-c", "mkdir -p /opt/flink/target/flink-web-upload&&chown -R flink:flink /opt/flink/target/"},
+		},
+		{
+			name: "taskmanager", generate: (*model.CreateFlinkV12ClusterRequest).NewTaskManagerDeployment,
+			container: "taskmanager", postStart: []string{"sh", "-c", "chown 9999:9999 /opt/flink/log"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			request := model.CreateFlinkV12ClusterRequest{
+				Name:        tea.String("token-permissions-" + tc.name),
+				JobManager:  &model.JobManagerV12{},
+				TaskManager: &model.TaskManagerV12{Nu: tea.Int(1)},
+			}
+			if tc.sidecar {
+				request.JobManager.SideCars = []model.SideCar{{
+					Name: tea.String("sidecar"), Image: tea.String("busybox"), Command: []string{"sleep", "10"},
+				}}
+			}
+			deployment, err := model.NewDeploymentCreateFromMap(tc.generate(&request))
+			require.NoError(t, err)
+			pod := deployment.Spec.Template.Spec
+			require.NotNil(t, pod.SecurityContext)
+			require.NotNil(t, pod.SecurityContext.FSGroup)
+			assert.Equal(t, int64(9999), *pod.SecurityContext.FSGroup)
+			require.NotNil(t, pod.SecurityContext.FSGroupChangePolicy)
+			assert.Equal(t, v1.FSGroupChangeOnRootMismatch, *pod.SecurityContext.FSGroupChangePolicy)
+			assert.Empty(t, pod.ServiceAccountName, "keep Kubernetes default service account selection")
+			assert.Nil(t, pod.AutomountServiceAccountToken, "keep Kubernetes default token automount behavior")
+			containerCount := 1
+			if tc.sidecar {
+				containerCount++
+			}
+			require.Len(t, pod.Containers, containerCount)
+			container := pod.Containers[0]
+			assert.Equal(t, tc.container, container.Name)
+			require.NotNil(t, container.SecurityContext)
+			require.NotNil(t, container.SecurityContext.RunAsUser)
+			assert.Equal(t, int64(0), *container.SecurityContext.RunAsUser)
+			require.NotNil(t, container.Lifecycle)
+			require.NotNil(t, container.Lifecycle.PostStart)
+			require.NotNil(t, container.Lifecycle.PostStart.Exec)
+			assert.Equal(t, tc.postStart, container.Lifecycle.PostStart.Exec.Command)
+			if tc.sidecar {
+				assert.Equal(t, "sidecar", pod.Containers[1].Name)
+			}
+		})
+	}
 }
 
 // TestCpuResourceCalculation 测试CPU资源计算是否正确
