@@ -158,6 +158,10 @@ var (
 				},
 				"spec": map[string]any{
 					"restartPolicy": "Always",
+					"securityContext": map[string]any{
+						"fsGroup":             9999,
+						"fsGroupChangePolicy": "OnRootMismatch",
+					},
 				},
 			},
 			"strategy": map[string]any{
@@ -189,6 +193,10 @@ var (
 				},
 				"spec": map[string]any{
 					"restartPolicy": "Always",
+					"securityContext": map[string]any{
+						"fsGroup":             9999,
+						"fsGroupChangePolicy": "OnRootMismatch",
+					},
 				},
 			},
 		},
